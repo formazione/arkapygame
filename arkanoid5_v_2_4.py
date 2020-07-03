@@ -194,7 +194,7 @@ def create_bricks(blist):
     h = 30
     w = 0
     for line in blist:
-        randomcolor = randrange(0,255), randrange(0,255), randrange(0,255),
+        randomcolor = randrange(128, 255), randrange(128, 255), randrange(128, 255),
         for brick in line:
             if brick == "1":
                 bricks.append(Brick(50 + w * 51, h, randomcolor))
@@ -215,7 +215,7 @@ lives = 3
 
 def make_stages():
     blist = []
-    for n in range(randrange(5,9)):
+    for n in range(randrange(6,12)):
         riga = [str(choice([0, 1])) for x in range(4)]
         riga2 = riga[::-1]
         riga = riga + riga2
