@@ -4,6 +4,7 @@ from pygame import gfxdraw
 import os
 from random import choice
 
+
 class Brick:
     "One brick class"
 
@@ -15,6 +16,7 @@ class Brick:
 
     def update(self):
         # when you update it will go to self.x and self.y
+        # bar.x is constantly equal to the mouse position in the while loop
         pygame.draw.rect(screen, GREEN, (self.x, self.y, 50, 20))
 
 
@@ -49,6 +51,7 @@ class Ball:
             ball.x -= velx
             # se arriva a 10 rimbalza
             if ball.x < 10:
+                pygame.mixer.Sound.play(s_wall)
                 ball_x = "right"
         # va in basso
         if ball_y == 'down':
@@ -59,12 +62,14 @@ class Ball:
             ball.y -= vel_y
             # se arriva in cima rimbalza in basso
             if ball.y < 10:
+                pygame.mixer.Sound.play(s_wall)
                 ball_y = 'down'
         # se va a destra aumenta x
         if ball_x == "right":
             ball.x += velx
             # a 480 rimbalza verso sinistra
             if ball.x > 480:
+                pygame.mixer.Sound.play(s_wall)
                 ball_x = "left"
         gfxdraw.filled_circle(screen, ball.x, ball.y, 6, self.color)
         # gfxdraw.filled_circle(screen, ball.x, ball.y, 5, YELLOW)
@@ -81,7 +86,7 @@ def collision():
     global ball, bar, ball_y, ball_x, vely, velx, mousedir, bricks
     global diff, lives, stage, score, loop
     if ball.rect.colliderect(bar):
-        pygame.mixer.Sound.play(s_coin)
+        pygame.mixer.Sound.play(hitbar)
         ball_y = "up"
         velx = 2 if diff > 0 else 1
         print(f"you hit with diff: {diff} vel_x = {velx}")
@@ -111,6 +116,7 @@ def collision():
                         ball_x = "left"
             bricks.pop(n)
             if bricks == []:
+                write_highest_score()
                 ball.y = 300
                 ball.x = 100
                 if stage < len(blist):
@@ -177,6 +183,16 @@ def make_stages():
         blist.append("".join(riga))
     return blist
 
+
+def write_highest_score():
+    "Checks highest score when game's over"
+    global score, scoremax
+
+    with open("score.txt", "w") as file:
+        if scoremax < score:
+            file.write(str(score))
+
+
 blist = make_stages()
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
@@ -199,11 +215,12 @@ pygame.mixer.quit()
 pygame.mixer.init(22050, -16, 2, 512)
 pygame.mixer.set_num_channels(32)
 # ===================================
-s_coin = pygame.mixer.Sound('sound\\coin.wav')
+hitbar = pygame.mixer.Sound('sound\\hitbar.wav')
 s_out = pygame.mixer.Sound('sound\\out.wav')
 s_brick = pygame.mixer.Sound('sound\\brick.wav')
-s_ready = pygame.mixer.Sound('sound\\GetReady1.wav')
+s_ready = pygame.mixer.Sound('sound\\ready.wav')
 s_over = pygame.mixer.Sound('sound\\GameOver1.wav')
+s_wall = pygame.mixer.Sound('sound\\wall.wav')
 
 clock = pygame.time.Clock()
 screen = pygame.display.set_mode((500, 500))
@@ -262,6 +279,8 @@ def mainloop():
         pygame.display.update()
         clock.tick(240)
 
+
+# This should read the file with the highest score
 try:
     if "score.txt" in os.listdir():
         with open("score.txt", "r") as file:
@@ -278,8 +297,5 @@ mainloop()
 
 pygame.quit()
 
+write_highest_score()
 
-
-with open("score.txt", "w") as file:
-    if scoremax < score:
-        file.write(str(score))
