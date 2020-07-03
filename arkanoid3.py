@@ -1,4 +1,4 @@
-# pong!
+# arkanoid
 import pygame
 from pygame import gfxdraw
 import os
@@ -28,6 +28,7 @@ class Bar:
         self.y = y
 
     def update(self):
+        
         pygame.draw.rect(screen, RED, (self.x, self.y, 60, 10))
         self.rect = pygame.Rect(self.x, self.y, 60, 10)
 
@@ -61,16 +62,17 @@ class Ball:
             # quando va in alto tolgo
             ball.y -= vel_y
             # se arriva in cima rimbalza in basso
-            if ball.y < 10:
+            if ball.y < 30:
                 pygame.mixer.Sound.play(s_wall)
                 ball_y = 'down'
         # se va a destra aumenta x
         if ball_x == "right":
             ball.x += velx
             # a 480 rimbalza verso sinistra
-            if ball.x > 480:
+            if ball.x > 490:
                 pygame.mixer.Sound.play(s_wall)
                 ball_x = "left"
+        
         gfxdraw.filled_circle(screen, ball.x, ball.y, 6, self.color)
         # gfxdraw.filled_circle(screen, ball.x, ball.y, 5, YELLOW)
         self.rect = pygame.Rect(self.x, self.y, 6, 6)
@@ -89,13 +91,17 @@ def collision():
         pygame.mixer.Sound.play(hitbar)
         ball_y = "up"
         velx = 2 if diff > 0 else 1
-        print(f"you hit with diff: {diff} vel_x = {velx}")
+        # print(f"you hit with diff: {diff} vel_x = {velx}")
 
     for n, brick in enumerate(bricks):
         if ball.rect.colliderect(brick):
+            # screen.fill((0, 0, 0))
+            pygame.draw.rect(screen, (0, 0, 0), (brick.x, brick.y, 50, 20))
+            screen.blit(update_fps(color="Black"), (12, 10))
             score += 20
-            pygame.mixer.Sound.play(s_brick)
-            print("You hit a brick")
+            screen.blit(update_fps(), (12, 10))
+            pygame.mixer.Sound.play(hitbrick)
+            # print("You hit a brick")
             if ball_y == "up":
                 # the ball is lower than the brick of 20
                 if ball.y == (brick.y + 20 - vel_y) :
@@ -117,6 +123,7 @@ def collision():
             bricks.pop(n)
             if bricks == []:
                 write_highest_score()
+                screen.fill((0, 0, 0))
                 ball.y = 300
                 ball.x = 100
                 if stage < len(blist):
@@ -125,6 +132,7 @@ def collision():
                 else:
                     stage = 0
                 bricks = create_bricks(make_stages())
+                show_bricks()
 
     if ball.y > 500:
         ball.x, ball.y = 500, 300
@@ -176,10 +184,10 @@ lives = 3
 
 
 def make_stages():
-    blist= []
+    blist = []
     for n in range(5):
-        riga = [str(choice([0,1]))  for x in range(8)]
-        print(riga)
+        riga = [str(choice([0, 1])) for x in range(8)]
+        # print(riga)
         blist.append("".join(riga))
     return blist
 
@@ -215,11 +223,11 @@ pygame.mixer.quit()
 pygame.mixer.init(22050, -16, 2, 512)
 pygame.mixer.set_num_channels(32)
 # ===================================
-hitbar = pygame.mixer.Sound('sound\\hitbar.wav')
-s_out = pygame.mixer.Sound('sound\\out.wav')
-s_brick = pygame.mixer.Sound('sound\\brick.wav')
+hitbar = pygame.mixer.Sound('sound\\hitbar2.wav')
+s_out = pygame.mixer.Sound('sound\\outspeech.wav')
+hitbrick = pygame.mixer.Sound('sound\\hitbrick.wav')
 s_ready = pygame.mixer.Sound('sound\\ready.wav')
-s_over = pygame.mixer.Sound('sound\\GameOver1.wav')
+s_over = pygame.mixer.Sound('sound\\over.wav')
 s_wall = pygame.mixer.Sound('sound\\wall.wav')
 
 clock = pygame.time.Clock()
@@ -234,25 +242,28 @@ pygame.mouse.set_visible(False)
 mousedir = "stop"
 diff = 0
 score = 0
-font = pygame.font.SysFont("Arial", 24)
+font = pygame.font.SysFont("Arial", 14)
 scoremax = 0
 
-def update_fps():
+def update_fps(color="Coral"):
     global score, scoremax
 
-    fps = f"Score: {score} Max: {scoremax} Lives: {lives} Stage: {stage}"
-    fps_text = font.render(fps, 0, pygame.Color("coral"))
+    fps = f"Max: {scoremax} Lives: {lives} Stage: {stage} Score: {score} "
+    fps_text = font.render(fps, 1, pygame.Color(color))
     return fps_text
 
 
+show_bricks()
 def mainloop():
     global startx, mousedir, diff
     pygame.mixer.Sound.play(s_ready)
     loop = 1
     while loop:
-        screen.blit(background, (0, 0))
-        screen.blit(update_fps(), (12, 10))
-        # screen.fill((0, 0, 0))
+        # screen.blit(background, (0, 0))
+        
+        #screen.fill((0, 0, 0))
+        pygame.draw.rect(screen, (0, 0, 0), (bar.x, bar.y, 60, 10))
+        gfxdraw.filled_circle(screen, ball.x, ball.y, 6, (0, 0, 0))
         keys = pygame.key.get_pressed()
         for event in pygame.event.get():
             loop = exit(event, loop)
@@ -275,7 +286,6 @@ def mainloop():
             mousedir = "stop"
         diff = abs(startx - posx)
         startx = posx
-        show_bricks()
         pygame.display.update()
         clock.tick(240)
 
@@ -284,7 +294,7 @@ def mainloop():
 try:
     if "score.txt" in os.listdir():
         with open("score.txt", "r") as file:
-            print("Scoremax = " + file.readlines()[0])
+            # print("Scoremax = " + file.readlines()[0])
             scoremax = int(file.readlines()[0])
     else:
         with open("score.txt", "w") as file:
