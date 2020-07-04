@@ -4,15 +4,16 @@ from pygame import gfxdraw
 import os
 import sys
 from random import choice, randrange
-
-
+import glob
+import time
 
 '''
-arkapygame 2.5
+2.8 - Tiny
+
+
+arkapygame 2.7
 ================
-4.7.2020
-- fix the lives problem
-- put a menu at the start
+- fixed the screenshot: now you can tacke more screenshot with "s" key
 '''
 
 
@@ -24,12 +25,14 @@ class Brick:
         self.y = y
         self.color = randomcolor
         # This is for collisions
-        self.rect = pygame.Rect(self.x, self.y, 50, 20)
+        self.w = 25
+        self.h = 10
+        self.rect = pygame.Rect(self.x, self.y, self.w, self.h)
 
     def update(self):
         # when you update it will go to self.x and self.y
         # bar.x is constantly equal to the mouse position in the while loop
-        pygame.draw.rect(screen, self.color, (self.x, self.y, 50, 20))
+        pygame.draw.rect(screen, self.color, (self.x, self.y, self.w, self.h))
         # pygame.draw.rect(screen, GREEN, (self.x, self.y, 50, 20))
 
 
@@ -39,11 +42,12 @@ class Bar:
     def __init__(self, x, y):
         self.x = x
         self.y = y
+        self.size = 30
 
     def update(self):
         
-        pygame.draw.rect(screen, RED, (self.x, self.y, 60, 10))
-        self.rect = pygame.Rect(self.x, self.y, 60, 10)
+        pygame.draw.rect(screen, RED, (self.x, self.y, self.size, 10))
+        self.rect = pygame.Rect(self.x, self.y, self.size, 10)
 
 
 class Ball:
@@ -52,7 +56,8 @@ class Ball:
     def __init__(self, x, y):
         self.x = x
         self.y = y
-        self.color = RED
+        self.color = choice([GREEN, YELLOW, ORANGE])
+        self.size = randrange(3,6)
 
     def update(self):
         "The ball moves"
@@ -85,31 +90,30 @@ class Ball:
             if ball.x > 490:
                 pygame.mixer.Sound.play(s_wall)
                 ball_x = "left"
-        
-        gfxdraw.filled_circle(screen, ball.x, ball.y, 6, self.color)
-        # gfxdraw.filled_circle(screen, ball.x, ball.y, 5, YELLOW)
-        self.rect = pygame.Rect(self.x, self.y, 6, 6)
+        gfxdraw.filled_circle(screen, ball.x, ball.y, self.size, self.color)
+        # gfxdraw.filled_circle(screen, ball.x, ball.y, 4, BLACK)
+        self.rect = pygame.Rect(self.x, self.y, self.size*2, self.size*2)
 
-
-def reverse():
-    global ball_x, velx, vel_y
-    ball_x = "right" if ball_x == "left" else "right"
 
 
 
 def collision():
     global ball, bar, ball_y, ball_x, vely, velx, mousedir, bricks
-    global diff, lives, stage, score, loop
+    global diff, lives, stage, score, loop, startx, posx, frame_speed
     if ball.rect.colliderect(bar):
+        # if startx != posx:
+        #     velx += int(abs(startx - posx))
+        #     print(int(startx - posx))
         pygame.mixer.Sound.play(hitbar)
         ball_y = "up"
         velx = 2 if diff > 0 else 1
-        # print(f"you hit with diff: {diff} vel_x = {velx}")
+        vely = 2 if diff > 0 else 1
+
 
     for n, brick in enumerate(bricks):
         if ball.rect.colliderect(brick):
             # screen.fill((0, 0, 0))
-            pygame.draw.rect(screen, (0, 0, 0), (brick.x, brick.y, 50, 20))
+            pygame.draw.rect(screen, (0, 0, 0), (brick.x, brick.y, brick.w, brick.h))
             screen.blit(update_fps(color="Black"), (12, 10))
             score += 20
             screen.blit(update_fps(), (12, 10))
@@ -117,7 +121,7 @@ def collision():
             # print("You hit a brick")
             if ball_y == "up":
                 # the ball is lower than the brick of 20
-                if ball.y == (brick.y + 20 - vel_y) :
+                if ball.y == (brick.y + 10 - vel_y) :
                     ball_y = "down"
                 # if the balls hit the brick on a side
                 else:
@@ -180,6 +184,7 @@ def pause():
                     pause = 0
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_q:
+                    pygame.event.set_grab(True)
                     pause = 0
                 if event.key == pygame.K_n:
                     generate_level()
@@ -191,11 +196,13 @@ def pause():
 def generate_level():
     global bricks
     screen.fill((0, 0, 0))
-    write("Arkanoid - Stage " + str(stage + 1), 200, 320)
-    ball.update()
-    bar.update()
     bricks = create_bricks(make_stages())
     show_bricks()
+    # write("Arkanoid - Stage " + str(stage + 1), 200, 320)
+    ball.x, ball.y = 250, 250
+
+    # ball.update()
+    # bar.update()
 
 
 def restart():
@@ -203,6 +210,7 @@ def restart():
     stage = 0 
     score = 0
     lives = 3
+    screen.fill((0, 0, 0))
     generate_level()
 
 
@@ -222,6 +230,8 @@ def exit(event, loop):
 
 def create_bricks(blist):
     "The bricks scheme"
+    global column
+
     bricks = []
     h = 30
     w = 0
@@ -229,26 +239,29 @@ def create_bricks(blist):
         randomcolor = randrange(0,255), randrange(0,255), randrange(0,255),
         for brick in line:
             if brick == "1":
-                bricks.append(Brick(50 + w * 51, h, randomcolor))
+                bricks.append(Brick(15 + w * 26, h, randomcolor))
             w += 1
-            if w == 8:
+            if w == column * 2:
                 w = 0
-                h += 21
+                h += 11
     return bricks
 
 
 def show_bricks():
     for brick in bricks:
         brick.update()
+    screen.blit(barrier, (0, 0))
+    screen.blit(barrier, (495, 0))
 
 stage = 0
 lives = 3
 
-
+column = 9
 def make_stages():
+    global column
     blist = []
-    for n in range(randrange(5,16)):
-        riga = [str(choice([0, 1])) for x in range(4)]
+    for n in range(randrange(10, 16)):
+        riga = [str(choice([0, 1])) for x in range(column)]
         riga2 = riga[::-1]
         riga = riga + riga2
         # print(riga)
@@ -270,6 +283,8 @@ BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 YELLOW = (255, 255, 0)
+BLUE = (0, 0, 128)
+ORANGE = (128, 128, 0)
 ball_x = 'left'
 ball_y = 'down'
 # speed horizzontal
@@ -304,6 +319,7 @@ bar = Bar(10, 480)
 ball = Ball(100, 300)
 bricks = create_bricks(blist)
 background = pygame.image.load("img\\background.png").convert()
+barrier = pygame.image.load("img\\barrier.png")
 pygame.mouse.set_visible(False)
 mousedir = "stop"
 diff = 0
@@ -321,16 +337,26 @@ def update_fps(color="Coral"):
 
 def write(text, x, y, color="Coral",):
     text = font.render(text, 1, pygame.Color(color))
-    screen.blit(text, (x, y))
+    text_rect = text.get_rect(center=(500//2, y))
+    screen.blit(text, text_rect)
     return text
 
+
+
+def speed_start():
+    x = pygame.mouse.get_pos()[0]
+    z = time.time()
+    return x, z
 
 # pause()
 show_bricks()
 counter = 0
+movebar = ""
+frame_speed = 240
+screen.blit(barrier, (0, 0))
 def mainloop():
     # screen.blit(write("Pause"), (250, 250))
-    global startx, mousedir, diff, counter
+    global startx, mousedir, diff, counter, movebar, posx, frame_speed
     pygame.mixer.Sound.play(s_ready)
     # pygame.mixer.Sound.play(track1)
     screen.fill((0, 0, 0))
@@ -340,35 +366,66 @@ def mainloop():
         # screen.blit(background, (0, 0))
         
         #screen.fill((0, 0, 0))
-        pygame.draw.rect(screen, (0, 0, 0), (bar.x, bar.y, 60, 10))
-        gfxdraw.filled_circle(screen, ball.x, ball.y, 6, (0, 0, 0))
+
         keys = pygame.key.get_pressed()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 loop = 0
-            if event.type == pygame.KEYUP:
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RIGHT:
+                    movebar = "right"
+                if event.key == pygame.K_LEFT:
+                    movebar = "left"
+                if event.key == pygame.K_UP:
+                    movebar = "up"
+                if event.key == pygame.K_DOWN:
+                    movebar = "down"
                 if event.key == pygame.K_ESCAPE:
                     loop = 0
                 if event.key == pygame.K_SPACE:
+                    pygame.event.set_grab(False)
                     pause()                
                 if event.key == pygame.K_s:
-                    pygame.image.save(screen, f"image{counter}.png")
+                    if glob.glob("*.png") != []:
+                        counter = int(glob.glob("*.png")[-1][-6:-4])
                     counter += 1
+                    pygame.image.save(screen, f"image0{counter}.png")
+                    # os.startfile(f"image0{counter}.png")
+                    # pause()
                 if event.key == pygame.K_r:
                     restart()
                 if event.key == pygame.K_n:
                     generate_level()
-                    
-            
-        # This is the position of the mouse on the x axe
+            if event.type == pygame.KEYUP:
+                movebar = ""
+        pygame.draw.rect(screen, (0, 0, 0), (bar.x, bar.y, 30, 10))
+        gfxdraw.filled_circle(screen, ball.x, ball.y, ball.size, (0, 0, 0))
+        # Keyboard commands
+        if bar.x < 480:
+            if movebar == "right":
+                bar.x += 2
+        if bar.x > 10:
+            if movebar == "left":
+                bar.x -= 2
+        if bar.y > 400:
+            if movebar == "up":
+                bar.y -= 2
+        if bar.y < 480:
+            if movebar == "down":
+                bar.y += 2
+        #          Move with the mouse
         posx= pygame.mouse.get_pos()[0]
+        
         if pygame.mouse.get_pos()[1] > 400:
             bar.y = pygame.mouse.get_pos()[1]
             pygame.mouse.set_pos(bar.x, bar.y)
-
-        if posx > 10 and posx < 430:
-            # il surface si muove come il mouse
+        # This limits the bar on the left and right
+        if posx > 10 and posx < 460:
             bar.x = posx
+
+
+        
+        # =======================================
         ball.update()
         bar.update()
         collision()
@@ -380,6 +437,8 @@ def mainloop():
             mousedir = "stop"
         diff = abs(startx - posx)
         startx = posx
+        
+
         pygame.display.update()
         clock.tick(300)
 
@@ -396,12 +455,13 @@ try:
 except:
     with open("score.txt", "w") as file:
         file.write("100")
-
+update_fps()
 def menu():
     loop = 1
     while loop:
         # screen.blit(background, (0, 0))
-        write("Press space tp start", 200, 320)
+        write("Press space to start", 200, 320)
+        write("Press r to restart during the game", 150, 340)
         #screen.fill((0, 0, 0))
         pygame.draw.rect(screen, (0, 0, 0), (bar.x, bar.y, 60, 10))
         gfxdraw.filled_circle(screen, ball.x, ball.y, 6, (0, 0, 0))
@@ -412,11 +472,12 @@ def menu():
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_ESCAPE:
                     loop = 0
+
                 if event.key == pygame.K_SPACE:
                     mainloop()
         pygame.display.update()
-        clock.tick(300)
-
+        clock.tick(frame_speed)
+pygame.event.set_grab(True)
 menu()
 
 pygame.quit()
