@@ -4,11 +4,12 @@ from pygame import gfxdraw
 import os
 import sys
 from random import choice, randrange
-# arkapygame 2.3 - 3.7.2020 19.27
-''' ............ changes scheduled ..............
-[1]. different brick color (random)
-2. simmetric rando stages
-3. Very close bricks
+'''
+arkapygame 2.5
+================
+4.7.2020
+- fix the lives problem
+- put a menu at the start
 '''
 
 
@@ -72,7 +73,6 @@ class Ball:
             ball.y -= vel_y
             # se arriva in cima rimbalza in basso
             if ball.y < 30:
-                refresh_bricks()
                 pygame.mixer.Sound.play(s_wall)
                 ball_y = 'down'
         # se va a destra aumenta x
@@ -80,7 +80,6 @@ class Ball:
             ball.x += velx
             # a 480 rimbalza verso sinistra
             if ball.x > 490:
-                refresh_bricks()
                 pygame.mixer.Sound.play(s_wall)
                 ball_x = "left"
         
@@ -94,10 +93,6 @@ def reverse():
     ball_x = "right" if ball_x == "left" else "right"
 
 
-def refresh_bricks():
-    screen.fill((0, 0, 0))
-    show_bricks()
-
 
 def collision():
     global ball, bar, ball_y, ball_x, vely, velx, mousedir, bricks
@@ -110,7 +105,7 @@ def collision():
 
     for n, brick in enumerate(bricks):
         if ball.rect.colliderect(brick):
-
+            # screen.fill((0, 0, 0))
             pygame.draw.rect(screen, (0, 0, 0), (brick.x, brick.y, 50, 20))
             screen.blit(update_fps(color="Black"), (12, 10))
             score += 20
@@ -151,7 +146,6 @@ def collision():
 
     # When the ball goes out of the screen in the bottom
     if ball.y > 510:
-        refresh_bricks()
         ball.x, ball.y = 500, 300
         lives -= 1
         pygame.mixer.Sound.play(s_out)
@@ -167,7 +161,12 @@ def collision():
 
 
 def pause():
+    global stage
+
     pause = 1
+    write("Arkanoid - Stage " + str(stage + 1), 200, 320)
+    ball.update()
+    bar.update()
     while pause:
         
         for event in pygame.event.get():
@@ -179,6 +178,29 @@ def pause():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_q:
                     pause = 0
+                if event.key == pygame.K_n:
+                    generate_level()
+        pygame.display.update()
+        clock.tick(300)
+    screen.fill((0, 0, 0))
+    show_bricks()   
+
+def generate_level():
+    global bricks
+    screen.fill((0, 0, 0))
+    write("Arkanoid - Stage " + str(stage + 1), 200, 320)
+    ball.update()
+    bar.update()
+    bricks = create_bricks(make_stages())
+    show_bricks()
+
+
+def restart():
+    global score, lives, stage
+    stage = 0 
+    score = 0
+    lives = 3
+    generate_level()
 
 
 
@@ -195,32 +217,20 @@ def exit(event, loop):
     return loop
 
 
-def create_bricks(blist,
-    horizzontal_distance = 2,
-    vertical_distance = 3,
-    ):
+def create_bricks(blist):
     "The bricks scheme"
     bricks = []
     h = 30
     w = 0
     for line in blist:
-        randomcolor = choice([GREEN, RED, YELLOW])
+        randomcolor = randrange(0,255), randrange(0,255), randrange(0,255),
         for brick in line:
-            if randomcolor is GREEN:
-                randomcolor = 0, randrange(128, 255), 0
-            if randomcolor is RED:
-                randomcolor = randrange(128, 255), 0, 0
-            if randomcolor is YELLOW:
-                randomcolor = randrange(128, 255), randrange(128, 255), randrange(128, 255)
-                # randomcolor = randrange(128, 255), randrange(128, 255), randrange(128, 255)
             if brick == "1":
-                # W * 
-                bricks.append(Brick(50 + w * (50 + horizzontal_distance), h, randomcolor))
+                bricks.append(Brick(50 + w * 51, h, randomcolor))
             w += 1
             if w == 8:
                 w = 0
-                # VERTICAL DISTANCE AMONG BRICKS
-                h += (20 + vertical_distance)
+                h += 21
     return bricks
 
 
@@ -234,7 +244,7 @@ lives = 3
 
 def make_stages():
     blist = []
-    for n in range(randrange(6,12)):
+    for n in range(randrange(5,16)):
         riga = [str(choice([0, 1])) for x in range(4)]
         riga2 = riga[::-1]
         riga = riga + riga2
@@ -306,8 +316,9 @@ def update_fps(color="Coral"):
     return fps_text
 
 
-def write(text, color="Coral"):
+def write(text, x, y, color="Coral",):
     text = font.render(text, 1, pygame.Color(color))
+    screen.blit(text, (x, y))
     return text
 
 
@@ -319,6 +330,8 @@ def mainloop():
     global startx, mousedir, diff, counter
     pygame.mixer.Sound.play(s_ready)
     # pygame.mixer.Sound.play(track1)
+    screen.fill((0, 0, 0))
+    show_bricks()
     loop = 1
     while loop:
         # screen.blit(background, (0, 0))
@@ -338,6 +351,10 @@ def mainloop():
                 if event.key == pygame.K_s:
                     pygame.image.save(screen, f"image{counter}.png")
                     counter += 1
+                if event.key == pygame.K_r:
+                    restart()
+                if event.key == pygame.K_n:
+                    generate_level()
                     
             
         # This is the position of the mouse on the x axe
@@ -377,7 +394,27 @@ except:
     with open("score.txt", "w") as file:
         file.write("100")
 
-mainloop()
+def menu():
+    loop = 1
+    while loop:
+        # screen.blit(background, (0, 0))
+        write("Press space tp start", 200, 320)
+        #screen.fill((0, 0, 0))
+        pygame.draw.rect(screen, (0, 0, 0), (bar.x, bar.y, 60, 10))
+        gfxdraw.filled_circle(screen, ball.x, ball.y, 6, (0, 0, 0))
+        keys = pygame.key.get_pressed()
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                loop = 0
+            if event.type == pygame.KEYUP:
+                if event.key == pygame.K_ESCAPE:
+                    loop = 0
+                if event.key == pygame.K_SPACE:
+                    mainloop()
+        pygame.display.update()
+        clock.tick(300)
+
+menu()
 
 pygame.quit()
 
