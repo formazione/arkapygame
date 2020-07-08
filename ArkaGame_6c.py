@@ -3,13 +3,42 @@ import pygame
 from pygame import gfxdraw
 import os
 from random import choice, randrange
+from glob import glob 
 
+'''
+To add a new type of game
+- createbricks5()
+- restart5()
+in the while loop of the mainmenu
+            elif event.key == pygame.K_5:
+                game = 5
+                restart5()
+        elif event.type == pygame.KEYUP:
+            if event.key == pygame.K_1 or event.key == pygame.K_2 or event.key == pygame.K_3 or event.key == pygame.K_4 or event.key == pygame.K_5:
+                screen.fill((0, 0, 0))
+                mainloop()
+
+in collision 1 line 135
+                if game == 5:
+                    bricks = create_bricks5()
+in text
+
+    if game == 4:
+        scorefile = "score4.txt"
+
+In the menu
+
+write("4 - Arkanoid tiny 2", 150, 400)
+'''
 
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 YELLOW = (255, 255, 0)
-
+ORANGE = (128, 255, 0)
+BLUE = (0, 0, 255)
+GRAY = (255, 255, 255)
+COLORS = (BLACK, RED, GREEN, YELLOW, ORANGE, BLUE, GRAY)
 
 class Brick:
     "One brick class"
@@ -45,9 +74,11 @@ class Bar:
         pygame.draw.rect(screen, RED, self.rect)
 
 
-velocity = 2
+velocity = 3
 class Ball:
     "Draw Player 2"
+
+    global velocity
 
     def __init__(self, x, y, size=10):
         self.x = x
@@ -63,7 +94,7 @@ class Ball:
 
         # sull'asse x Va verso sinistra
         
-        if pygame.time.get_ticks() - self.counter > velocity:
+        if pygame.time.get_ticks() - self.counter >= velocity:
             self.counter = pygame.time.get_ticks()
             if ball_x == "left":
                 # sottraggo perchè vado a sinistra
@@ -100,11 +131,11 @@ class Ball:
 
 def collision1():
     global ball, bar, ball_y, ball_x, vely, velx, mousedir, bricks
-    global diff, lives, stage, score, loop, game
+    global diff, lives, stage, score, loop, game, randomstage, velocity
     if ball.rect.colliderect(bar):
         print("sulla barra: ", ball.x - bar.x)
         print("Diff=", diff)
-        pygame.mixer.Sound.play(hitbar)
+        pygame.mixer.Sound.play(sounds["hitbar"])
         # when the ball hit the bar, it goes up
         ball_y = "up"
         if (mousedir == "left" and ball_x == "right"):
@@ -112,19 +143,13 @@ def collision1():
         if (mousedir == "right" and ball_x == "left"):
             ball_x = "right"
 
-        # if diff > 0:
-        #     if  diff < 8:
-        #         velx = diff // 2
-        #         vely = diff // 2
-        # print(f"you hit with diff: {diff} vel_x = {velx}")
-
     for n, brick in enumerate(bricks):
         if ball.rect.colliderect(brick):
             # screen.fill((0, 0, 0))
             pygame.draw.rect(screen, (0, 0, 0), brick.rect)
-            screen.blit(update_fps(color="Black"), (12, 10))
+            screen.blit(show_fps(color="Black"), (12, 10))
             score += 20
-            screen.blit(update_fps(), (12, 10))
+            screen.blit(show_fps(), (12, 10))
             pygame.mixer.Sound.play(hitbrick)
             # print("You hit a brick")
             if ball_y == "up":
@@ -145,44 +170,75 @@ def collision1():
                         ball_x = "right"
                     else:
                         ball_x = "left"
-            bricks.pop(n)
+            if ball.color != "red":
+                bricks.pop(n)
+
+            # STAGE FINITO
             if bricks == []:
-                write_highest_score()
+                set_score()
+                stage += 1
+                score += 50
                 screen.fill((0, 0, 0))
                 ball.y = 300
                 ball.x = 100
+                velocity = 3
                 pygame.mixer.Sound.play(s_ready)
+                if randomstage == 1:
+                    game = randrange(1,5)
                 if game == 1:
                     bricks = create_bricks1()
                 if game == 2:
                     bricks = create_bricks2()
                 if game == 3:
                     bricks = create_bricks3()
+                if game == 4:
+                    bricks = create_bricks4()
+                if game == 5:
+                    game = randrange(1, 5)
+                    if game == 1:
+                        create_bricks1()
+                    if game == 2:
+                        create_bricks2()
+                    if game == 3:
+                        create_bricks3()
+                        ball.size, bar.w = 6, 30
+                    if game == 4:
+                        ball.size, bar.w = 6, 30
+                        create_bricks4()
                 show_bricks()
 
     if ball.y > 510:
         ball.x, ball.y = 500, 300
         lives -= 1
-        pygame.mixer.Sound.play(s_out)
+        pygame.mixer.Sound.play(sounds["s_out"])
+        velocity = 4
+        ball.color = GREEN
         if lives < 0:
             pygame.mixer.Sound.play(s_over)
+            set_score()
             score = 0
-            stage = 0
+            stage = 1
             ball_y = 'down'
             ball_x = 'left'
-            loop = 0
+            back_to_menu()
 
 
 
 
 def create_bricks1():
-    "The bricks scheme for game 1"
+    "The bricks scheme for game 1 - double simmetry"
     blist = []
-    for n in range(5):
+    templ = []
+    for n in range(3):
         riga = [str(choice([0, 1])) for x in range(4)]
         riga2 = riga[::-1]
         riga = riga + riga2
         # print(riga)
+        templ.append(riga)
+    templ.append(templ[2])
+    templ.append(templ[1])
+    templ.append(templ[0])
+    for riga in templ:
         blist.append("".join(riga))
     bricks = []
     h = 50
@@ -211,7 +267,7 @@ def create_bricks2():
     h = 50
     w = 0
     for line in blist:
-        rndclr = randrange(0, 255), randrange(0, 255), randrange(0, 255),
+        rndclr = randrange(100, 255), randrange(100, 255), randrange(100, 255),
         for brick in line:
             if brick == "1":
                 bricks.append(Brick(50 + w * 51, h, color=rndclr))
@@ -238,10 +294,10 @@ def create_bricks3():
     h = 50
     w = 0
     for line in blist:
-        rndclr = randrange(0, 255), randrange(0, 255), randrange(0, 255)
+        rndclr = randrange(0, 100), randrange(50, 255), randrange(250, 255)
         for brick in line:
             if brick == "1":
-                bricks.append(Brick(15 + w * 26, h, w=25, h=10, color=rndclr))
+                bricks.append(Brick(6 + w * 26, h, w=25, h=10, color=rndclr))
             w += 1
             if w == column * 2:
                 w = 0
@@ -249,37 +305,39 @@ def create_bricks3():
     return bricks
 
 
-def write_highest_score():
-    "Checks highest score when game's over"
-    global score, scoremax
-
-    with open("score.txt", "w") as file:
-        if scoremax < score:
-            file.write(str(score))
-
-
-
-def update_fps(color="Coral"):
-    global score, scoremax
-
-    fps = f"Max: {scoremax} Lives: {lives} Stage: {stage} Score: {score} "
-    fps_text = font.render(fps, 1, pygame.Color(color))
-    return fps_text
-
-
-
-
-
-
-def write(text, x, y, color="Coral",):
-    text = font.render(text, 1, pygame.Color(color))
-    text_rect = text.get_rect(center=(500 // 2, y))
-    screen.blit(text, text_rect)
-    return text
+def create_bricks4():
+    "The bricks scheme"
+    global column
+    blist = []
+    templ = []
+    for n in range(randrange(3,16)):
+        riga = [str(choice([0, 1])) for x in range(column)]
+        riga2 = riga[::-1]
+        riga = riga + riga2
+        templ.append(riga)
+    templ.append(templ[2])
+    templ.append(templ[1])
+    templ.append(templ[0])
+    for riga in templ:
+        blist.append("".join(riga))
+    bricks = []
+    h = 50
+    w = 0
+    for line in blist:
+        randomcolor = randrange(100, 255), randrange(100, 255), randrange(100, 255),
+        for brick in line:
+            if brick == "1":
+                # This are the rect coordinates
+                bricks.append(Brick(60 + w * 21, h, w=20, h=20, color=randomcolor))
+            w += 1
+            if w == column * 2:
+                w = 0
+                h += 21
+    return bricks
 
 
 def score_text():
-    global game
+    global game, randomstage
 
     if game == 1:
         scorefile = "score1.txt"
@@ -287,9 +345,12 @@ def score_text():
         scorefile = "score2.txt"
     if game == 3:
         scorefile = "score3.txt"
-    print(f"memorizzo punteggio in {scorefile}")
-    return scorefile
+    if game == 4:
+        scorefile = "score4.txt"
+    if game == 5:
+        scorefile = "score5.txt"
 
+    return scorefile
 
 
 def get_score():
@@ -314,20 +375,23 @@ def get_score():
         with open(scorefile, "w") as file:
             file.write("100")
 
+
 def set_score():
-    global score
+    global score, randomstage
+
     scorefile = score_text()
-    with open(scorefile, "w") as file:
-        if score > scoremax:
+    with open(scorefile, "r") as file:
+        scoremax = int(file.readlines()[0])
+    if score > scoremax:
+        with open(scorefile, "w") as file:
             file.write(str(score))
 
 
-
 def restart_common():
-    "Common restart"    
+    "Common restart"
     global score, lives, stage
 
-    stage = 0
+    stage = 1
     score = 0
     lives = 3
     screen.fill((0, 0, 0))
@@ -338,25 +402,27 @@ def restart_common():
     bar.w = 60
 
 
-
 def restart1():
     global bricks
-    "This restart1s game 1"
+    "MONOCHROME VERSION"
     restart_common()
     bricks = create_bricks1()
-    show_bricks()
+    pygame.display.set_caption("MonoArcha")
 
 
 def restart2():
     global bricks
-    "This restart1s game 2"
+    "POLYCHROME VERSION"
     restart_common()
     bricks = create_bricks2()
     show_bricks()
+    pygame.display.set_caption("PolyArcha")
+
 
 def restart3():
     global bricks
-    "This restart1s game 2"
+    "TINY VERSION 1"
+    pygame.display.set_caption("Tiny 1")
     restart_common()
     ball.size = 6
     bar.w = 30
@@ -364,49 +430,143 @@ def restart3():
     show_bricks()
 
 
+def restart4():
+    global bricks
+    "TINY VERSION 2"
+    pygame.display.set_caption("Tiny 2")
+    restart_common()
+    ball.size = 8
+    bar.w = 20
+    bar.h = 7
+    bar.color = ORANGE
+    bricks = create_bricks4()
+    show_bricks()
+
+
+# ============================= SHOW BRICKS ================ #
 def show_bricks():
+    pygame.draw.line(screen, "red", (0, 10), (500, 10), 2)
+    pygame.draw.line(screen, "red", (0, 40), (500, 40), 2)
     for brick in bricks:
         brick.update()
     screen.blit(barrier, (0, 0))
     screen.blit(barrier, (495, 0))
+# ========================================================== #
 
+def show_fps(color="Coral"):
+    global score, scoremax, stage, randrange, font2
+    if randrange:
+        rnd = "Mode: Rnd"
+    else:
+        rnd = ""
+    fps = f"Max: {scoremax} Lives: {lives} Stage: {stage} Score: {score}"
+    fps_text = font2.render(fps, 1, pygame.Color(color))
+
+    return fps_text
+
+
+def write(text, x, y, color="Coral",):
+    text = font.render(text, 1, pygame.Color(color))
+    text_rect = text.get_rect(center=(500 // 2, y))
+    screen.blit(text, text_rect)
+    return text
+
+
+def back_to_menu():
+    set_score()
+    screen.fill((0, 0, 0))
+    mainmenu()
 
 # =================================================================
+
 def mainloop():
-    global startx, mousedir, diff, game
+    global startx, mousedir, diff, game, velocity
+
     pygame.mixer.Sound.play(s_ready)
     show_bricks()
     # screen.fill((0, 0, 0))
-
+    pygame.mouse.set_visible(False)
+    pygame.event.set_grab(True)
     get_score()
-    loop = 1
-    while loop:
+    # increase velocity after a while
+    times = pygame.time.get_ticks()
+    loop2 = 1
+    velocity = 4
+    screen.blit(show_fps(color="CORAL"), (12, 10))
+    while loop2:
+        # check if the time has passed to increase velocity
+        if score % 1000 == 0:
+            velocity = 3
+            times = pygame.time.get_ticks()
+            ball.color = GREEN
+        if velocity > 0:
+            if pygame.time.get_ticks() - times > 20000:
+                velocity -= 1
+                if velocity == 2:
+                    ball.color = YELLOW
+                if velocity == 1:
+                    ball.color = GRAY
+                times = pygame.time.get_ticks()
 
         pygame.draw.rect(screen, (0, 0, 0), (bar.x, bar.y, bar.w, bar.h))
         gfxdraw.filled_circle(screen, ball.x, ball.y, ball.size // 2, (0, 0, 0))
         # keys = pygame.key.get_pressed()
+        posx = pygame.mouse.get_pos()[0]
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 set_score()
-                loop = 0
+                loop2 = 0
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     set_score()
-                    loop = 0
+                    # pygame.event.set_grab(False)
+                    loop2 = 0
                 if event.key == pygame.K_m:
-                    set_score()
-                    screen.fill((0, 0, 0))
-                    mainmenu()
+                    back_to_menu()
             if event.type == pygame.KEYUP:
                 if event.type == pygame.K_ESCAPE:
-                    loop = 0
+                    loop2 = 0
+            if event.type == pygame.QUIT:
+                loop = 0
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_1:
+                    game = 1
+                    restart1()
+                elif event.key == pygame.K_2:
+                    game = 2
+                    restart2()
+                elif event.key == pygame.K_3:
+                    game = 3
+                    restart3()
+                elif event.key == pygame.K_4:
+                    game = 4
+                    restart4()
+                elif event.key == pygame.K_5:
+                    randomstage = 1
+                    game = 5
+                    game2 = randrange(1, 5)
+                    if game2 == 1:
+                        restart1()
+                    if game2 == 2:
+                        restart2()
+                    if game2 == 3:
+                        restart3()
+                    if game2 == 4:
+                        restart4()
+                # Next game
+                # elif event.key == pygame.K_6:
+                #     game = 6
+                #     restart6()
+            elif event.type == pygame.KEYUP:
+                if event.key == pygame.K_1 or event.key == pygame.K_2 or event.key == pygame.K_3 or event.key == pygame.K_4 or event.key == pygame.K_5:
+                    screen.fill((0, 0, 0))
+                    mainloop()
         # This is the position of the mouse on the x axe
 
-        posx = pygame.mouse.get_pos()[0]
         if pygame.mouse.get_pos()[1] > 400:
             bar.y = pygame.mouse.get_pos()[1]
 
-        if posx > 10 and posx < 430:
+        if posx > 10 and posx < 430 + 60 - bar.w:
             # il surface si muove come il mouse
             bar.x = posx
         diff = startx - posx
@@ -417,15 +577,17 @@ def mainloop():
         bar.update()
         collision1()
         pygame.display.update()
-        clock.tick(240)
-    pygame.quit()
+        clock.tick(360)
+    #pygame.quit()
 
 
 def check_mouse_dir(diff):
-    if diff <0:
+    if diff < 0:
         mousedir = "right"
-    else:
+    elif diff > 0:
         mousedir = "left"
+    else:
+        mousedir = ""
     return mousedir
 
 
@@ -433,34 +595,36 @@ def check_mouse_dir(diff):
 
 
 
-
+randomstage = 0
 def mainmenu():
     "The menu to choose among different games"
     
-    global game
+    global game, randomstage
     
     
     screen.fill((0, 0, 0))
-    write("ARKAGAME", 200, 120, color="yellow")
-    write("A Game by Giovanni Gatto", 200, 20, color="red")
+    write("ARKAGAME", 200, 50, color="yellow")
+    write("A Game by Giovanni Gatto", 200, 120, color="red")
     write("Follow me on youtube", 200, 140)
     write("and pythonprogramming.altervista.org", 200, 160)
     write("CHOOSE YOUR GAME", 200, 300, color="green")
     write("1 - Arkanoid Monochrome", 150, 340)
     write("2 - Arkanoid Polichrome", 150, 360)
     write("3 - Arkanoid tiny", 150, 380)
+    write("4 - Arkanoid tiny 2", 150, 400)
+    write("5 - RANDONOID", 150, 420)
+    # write("4 - Arkanoid tiny 2", 150, 400)
     write("July 2020", 150, 480, color="gray")
     loop = 1
     while loop:
         # screen.blit(background, (0, 0))
         # keys = pygame.key.get_pressed()
+        #ui = pygame.event.wait()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 loop = 0
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    loop = 0
-                elif event.key == pygame.K_1:
+                if event.key == pygame.K_1:
                     game = 1
                     restart1()
                 elif event.key == pygame.K_2:
@@ -469,16 +633,37 @@ def mainmenu():
                 elif event.key == pygame.K_3:
                     game = 3
                     restart3()
+                elif event.key == pygame.K_4:
+                    game = 4
+                    restart4()
+                elif event.key == pygame.K_5:
+                    randomstage = 1
+                    game = 5
+                    game2 = randrange(1, 5)
+                    if game2 == 1:
+                        restart1()
+                    if game2 == 2:
+                        restart2()
+                    if game2 == 3:
+                        restart3()
+                    if game2 == 4:
+                        restart4()
+                # Next game
+                # elif event.key == pygame.K_6:
+                #     game = 6
+                #     restart6()
             elif event.type == pygame.KEYUP:
-                if event.key == pygame.K_1 or event.key == pygame.K_2 or event.key == pygame.K_3:
+                if event.key == pygame.K_1 or event.key == pygame.K_2 or event.key == pygame.K_3 or event.key == pygame.K_4 or event.key == pygame.K_5:
                     screen.fill((0, 0, 0))
                     mainloop()
-
-        pygame.display.update()
+                if event.key == pygame.K_ESCAPE:
+                    loop = 0
+            # Put this in line with for event ...
+            pygame.display.update()
     pygame.quit()
 
 # costants
-stage = 0
+
 lives = 3
 
 ball_x = 'left'
@@ -490,38 +675,48 @@ vel_y = 1
 ######################
 #     sound          #
 ######################
-pygame.mixer.pre_init(44100, -16, 1, 512)
-pygame.init()
-pygame.mixer.quit()
-pygame.mixer.init(22050, -16, 2, 512)
-pygame.mixer.set_num_channels(32)
+def init():
+    "Initializing pygame and mixer"
+    pygame.mixer.pre_init(44100, -16, 1, 512)
+    pygame.init()
+    pygame.mixer.quit()
+    pygame.mixer.init(22050, -16, 2, 512)
+    pygame.mixer.set_num_channels(32)
 # =========================== ([ sounds ]) ============
-hitbar = pygame.mixer.Sound('sound\\hitbar2.wav')
-s_out = pygame.mixer.Sound('sound\\outspeech.wav')
+init()
+lsounds = glob("*.wav")
+
+sounds = {}
+for sound in lsounds:
+    ds[sound[:-4]] = pygame.mixer.Sound("sound\\{sound}")
+
+sounds["hitbar"] = pygame.mixer.Sound('sound\\hitbar2.wav')
+sounds["s_out"] = pygame.mixer.Sound('sound\\outspeech.wav')
 hitbrick = pygame.mixer.Sound('sound\\hitbrick.wav')
 s_ready = pygame.mixer.Sound('sound\\ready.wav')
 s_over = pygame.mixer.Sound('sound\\over.wav')
 s_wall = pygame.mixer.Sound('sound\\wall.wav')
 
 screen = pygame.display.set_mode((500, 500))
-pygame.display.set_caption("ArkaGame 3.0")
+pygame.display.set_caption("ArkaGame 5.0 by pythonprogramming.altervista.org")
 
 clock = pygame.time.Clock()
 startx = 0
 
 background = pygame.image.load("img\\background.png").convert()
 barrier = pygame.image.load("img\\barrier.png").convert()
-pygame.mouse.set_visible(False)
+
 mousedir = "stop"
 diff = 0
 score = 0
-font = pygame.font.SysFont("Arial", 14)
+font2 = pygame.font.SysFont("Arial", 20)
+
 scoremax = 0
 
 font = pygame.font.SysFont("Arial", 24)
 bar = Bar(10, 480)
 ball = Ball(100, 300)
-pygame.event.set_grab(True)
+
 
 mainmenu()
-
+# mainloop()

@@ -1,0 +1,12 @@
+Pygame manual
+
+
+Draw a line
+
+
+        pygame.draw.rect(screen, (0, 0, 0), (bar.x, bar.y, bar.w, bar.h))
+        gfxdraw.filled_circle(
+            screen,
+            ball.x,
+            ball.y,
+            ball.size // 2, (0, 0, 0))

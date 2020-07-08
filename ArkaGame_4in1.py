@@ -4,6 +4,31 @@ from pygame import gfxdraw
 import os
 from random import choice, randrange
 
+'''
+To add a new type of game
+- createbricks5()
+- restart5()
+in the while loop of the mainmenu
+            elif event.key == pygame.K_5:
+                game = 5
+                restart5()
+        elif event.type == pygame.KEYUP:
+            if event.key == pygame.K_1 or event.key == pygame.K_2 or event.key == pygame.K_3 or event.key == pygame.K_4 or event.key == pygame.K_5:
+                screen.fill((0, 0, 0))
+                mainloop()
+
+in collision 1 line 135
+                if game == 5:
+                    bricks = create_bricks5()
+in text
+
+    if game == 4:
+        scorefile = "score4.txt"
+
+In the menu
+
+write("4 - Arkanoid tiny 2", 150, 400)
+'''
 
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
@@ -158,6 +183,8 @@ def collision1():
                     bricks = create_bricks2()
                 if game == 3:
                     bricks = create_bricks3()
+                if game == 4:
+                    bricks = create_bricks4()
                 show_bricks()
 
     if ball.y > 510:
@@ -249,6 +276,30 @@ def create_bricks3():
     return bricks
 
 
+def create_bricks4():
+    "The bricks scheme"
+    blist = []
+    for n in range(randrange(5,16)):
+        riga = [str(choice([0, 1])) for x in range(4)]
+        riga2 = riga[::-1]
+        riga = riga + riga2
+        # print(riga)
+        blist.append("".join(riga))
+    bricks = []
+    h = 50
+    w = 0
+    for line in blist:
+        randomcolor = randrange(0, 255), randrange(0, 255), randrange(0, 255),
+        for brick in line:
+            if brick == "1":
+                bricks.append(Brick(50 + w * 51, h, w=30, h=10, color=randomcolor))
+            w += 1
+            if w == 8:
+                w = 0
+                h += 21
+    return bricks
+
+
 def write_highest_score():
     "Checks highest score when game's over"
     global score, scoremax
@@ -287,6 +338,8 @@ def score_text():
         scorefile = "score2.txt"
     if game == 3:
         scorefile = "score3.txt"
+    if game == 4:
+        scorefile = "score4.txt"
     print(f"memorizzo punteggio in {scorefile}")
     return scorefile
 
@@ -341,7 +394,7 @@ def restart_common():
 
 def restart1():
     global bricks
-    "This restart1s game 1"
+    "MONOCHROME VERSION"
     restart_common()
     bricks = create_bricks1()
     show_bricks()
@@ -349,18 +402,27 @@ def restart1():
 
 def restart2():
     global bricks
-    "This restart1s game 2"
+    "POLYCHROME VERSION"
     restart_common()
     bricks = create_bricks2()
     show_bricks()
 
 def restart3():
     global bricks
-    "This restart1s game 2"
+    "TINY VERSION 1"
     restart_common()
     ball.size = 6
     bar.w = 30
     bricks = create_bricks3()
+    show_bricks()
+
+def restart4():
+    global bricks
+    "TINY VERSION 2"
+    restart_common()
+    ball.size = 6
+    bar.w = 30
+    bricks = create_bricks4()
     show_bricks()
 
 
@@ -449,6 +511,7 @@ def mainmenu():
     write("1 - Arkanoid Monochrome", 150, 340)
     write("2 - Arkanoid Polichrome", 150, 360)
     write("3 - Arkanoid tiny", 150, 380)
+    write("4 - Arkanoid tiny 2", 150, 400)
     write("July 2020", 150, 480, color="gray")
     loop = 1
     while loop:
@@ -469,8 +532,11 @@ def mainmenu():
                 elif event.key == pygame.K_3:
                     game = 3
                     restart3()
+                elif event.key == pygame.K_4:
+                    game = 4
+                    restart4()
             elif event.type == pygame.KEYUP:
-                if event.key == pygame.K_1 or event.key == pygame.K_2 or event.key == pygame.K_3:
+                if event.key == pygame.K_1 or event.key == pygame.K_2 or event.key == pygame.K_3 or event.key == pygame.K_4:
                     screen.fill((0, 0, 0))
                     mainloop()
 
