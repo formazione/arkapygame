@@ -205,8 +205,11 @@ def collision1():
                 if randomstage == 1:
                     game = randrange(1,5)
                 if game == 1:
+                    if bar.w > 20:
+                        bar.w -= 5
                     bricks = create_bricks1()
                 if game == 2:
+                    bar.w = randrange(20, 70, 10)
                     bricks = create_bricks2()
                 if game == 3:
                     bricks = create_bricks3()
