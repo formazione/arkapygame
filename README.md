@@ -1,7 +1,8 @@
 <img src="https://i1.wp.com/pythonprogramming.altervista.org/wp-content/uploads/2020/07/particles.png?w=499&ssl=1">
 <h1>arkapygame</h1>
 <a href="https://pythonprogramming.altervista.org/particles-in-arkapygame-v-10-0">Arkanoid clone made with pygame</a>
-
+<br>
+<a href="https://formazione.itch.io/arkapygame">The executable on itch.io</a>
 
 Many bugs hava been fixed in version 11.
 
