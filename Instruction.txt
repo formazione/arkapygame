@@ -15,5 +15,4 @@ GO TO MENU
 Use m to go back to the menu
 
 EXIT
-Press esc to exit.
-In the menu you can also use the mouse.
+Press esc to escape.
