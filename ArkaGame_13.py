@@ -207,6 +207,30 @@ def to_new_stage():
     velocity = 3
     pygame.mixer.Sound.play(sounds["ready"])
 
+def create_stage():
+    global randomstage, game
+
+    if randomstage == 1:
+        game = randrange(1, 5)
+        choose_stage()
+    else:
+        choose_stage()
+
+def choose_stage():
+    global bricks
+
+    if game == 1:
+        if bar.w > 20:
+            bar.w -= 5
+        bricks = create_bricks1()
+    if game == 2:
+        bar.w = randrange(20, 70, 10)
+        bricks = create_bricks2()
+    if game == 3:
+        bricks = create_bricks3()
+    if game == 4:
+        bricks = create_bricks4()
+    show_bricks()
 
 def collision1():
     global ball, bar, ball_y, ball_x, mousedir, bricks
@@ -248,40 +272,15 @@ def collision1():
             hit_brick_update(brick, n)
             if bricks == []:
                 to_new_stage()
-                if randomstage == 1:
-                    game = randrange(1,5)
-                if game == 1:
-                    if bar.w > 20:
-                        bar.w -= 5
-                    bricks = create_bricks1()
-                if game == 2:
-                    bar.w = randrange(20, 70, 10)
-                    bricks = create_bricks2()
-                if game == 3:
-                    bricks = create_bricks3()
-                if game == 4:
-                    bricks = create_bricks4()
-                show_bricks()
+                create_stage()
+
         if ball.rect.colliderect(brick):
             # screen.fill((0, 0, 0))
             hit_brick_update(brick, n)
             ball_direction(brick)
             if bricks == []:
                 to_new_stage()
-                if randomstage == 1:
-                    game = randrange(1,5)
-                if game == 1:
-                    if bar.w > 20:
-                        bar.w -= 5
-                    bricks = create_bricks1()
-                if game == 2:
-                    bar.w = randrange(20, 70, 10)
-                    bricks = create_bricks2()
-                if game == 3:
-                    bricks = create_bricks3()
-                if game == 4:
-                    bricks = create_bricks4()
-                show_bricks()
+                create_stage()
 
 
 
@@ -542,11 +541,7 @@ def back_to_menu():
     mainmenu()
 
 # =================================================================
-def delete_particles():
-    global particles
-    for particle in particles:
-        pygame.draw.circle(screen, (0, 0, 0), [int(particle[0][0]),int(particle[0][1])], particle[2])
-    particles = []
+
 
 
 p_count = 0
@@ -729,6 +724,12 @@ def decrease_particles():
         if particle[2] <= 0:
             particles.remove(particle)
 
+
+def delete_particles():
+    global particles
+    for particle in particles:
+        pygame.draw.circle(screen, (0, 0, 0), [int(particle[0][0]),int(particle[0][1])], particle[2])
+    particles = []
 
 
 randomstage = 0
