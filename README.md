@@ -31,4 +31,5 @@ Use m to go back to the menu
 <b>EXIT</b>
 Press esc to escape.
 
-<iframe width="640" height="360" src="https://www.youtube.com/embed/dd40cmjOJj0" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+https://youtu.be/dd40cmjOJj0
