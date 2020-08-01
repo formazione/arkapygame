@@ -5,6 +5,7 @@ import os
 from random import choice, randrange
 from glob import glob 
 import random
+from time import time
 '''
 To add a new type of game
 - createbricks5()
@@ -53,6 +54,7 @@ class Brick(pygame.sprite.Sprite):
         self.w = w
         self.h = h
         self.color = color
+        self.surface = pygame.Surface
         # This is for collision1
         self.rect = pygame.Rect(self.x, self.y, self.w, self.h)
 
@@ -72,11 +74,14 @@ class Bar(pygame.sprite.Sprite):
         self.y = y
         self.w = w
         self.h = h
+        self.image = pygame.image.load("img/bar.png")
+        self.rect = self.image.get_rect()
 
     def update(self):
 
         self.rect = pygame.Rect(self.x, self.y, self.w, self.h)
-        pygame.draw.rect(screen, RED, self.rect)
+        screen.blit(self.image, self.rect)
+        
 
 
 class Bullet(pygame.sprite.Sprite):
@@ -104,6 +109,13 @@ class Bullet(pygame.sprite.Sprite):
 
     def delete(self):
         pygame.draw.rect(screen, BLACK, (self.x, self.y + 1, self.w, self.h))
+
+
+def save_image(screen: pygame.Surface, name: str="screenshot.png"):
+    "Saves an image of the screen;\
+    arg 1 screen surface, arg 2 name to save"
+    pygame.image.save(screen, name)
+
 
 velocity = 3
 class Ball(pygame.sprite.Sprite):
@@ -241,7 +253,7 @@ def collision1():
     if ball.rect.colliderect(bar):
         # print("sulla barra: ", ball.x - bar.x)
         # print("Diff=", diff)
-        particles_on = 1
+        # particles_on = 1
         pygame.mixer.Sound.play(sounds["hitbar2"])
         # when the ball hit the bar, it goes up
         ball_y = "up"
@@ -286,11 +298,6 @@ def collision1():
             if bricks == []:
                 to_new_stage()
                 create_stage()
-
-
-
-
-
 
 
 def create_bricks1():
@@ -613,7 +620,8 @@ def mainloop():
 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if bullet.canfire:
-                    print("fire")      
+                    particles_on = 1     
+                    
                     pygame.mixer.Sound.play(sounds["bang"])
                     bullet.x = bar.x + bar.w // 2
                     bullet.y = bar.y
@@ -621,6 +629,8 @@ def mainloop():
                     bullet.canfire = 0
             
 
+            if event.type == pygame.QUIT:
+                loop = 0
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     set_score()
@@ -628,12 +638,8 @@ def mainloop():
                     loop2 = 0
                 if event.key == pygame.K_m:
                     back_to_menu()
-            if event.type == pygame.KEYUP:
-                if event.type == pygame.K_ESCAPE:
-                    loop2 = 0
-            if event.type == pygame.QUIT:
-                loop = 0
-            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_s:
+                    save_image(screen)
                 if event.key == pygame.K_1:
                     game = 1
                     restart1()
@@ -701,7 +707,7 @@ def check_mouse_dir(diff):
 def bar_particles():
     global p_count, particles, particles_on
     p_count += .1
-    if p_count < 36:
+    if p_count < 6:
         show_particles()
     else:
         p_count = 0
@@ -717,8 +723,11 @@ def show_particles():
     if count == 6:
         count = 0
         particles.append([
-            [random.randint(bar.x, bar.x + bar.w), bar.y],
+            # first
+            [random.randint(bar.x + bar.w // 2 -2, bar.x + bar.w - bar.w // 2 + 2), bar.y],
+            # second
             [random.randint(0, 10) / 10 - 1, -2],
+            # thirs
             random.randint(4, 7)
             ])
         decrease_particles()
@@ -727,11 +736,12 @@ def decrease_particles():
     global particles
 
     for particle in particles:
+        # circles in random origin of random ra
         pygame.draw.circle(screen, (0, 0, 0), [int(particle[0][0]),int(particle[0][1])], particle[2])
         particle[0][0] +- particle[1][0]
         particle[0][1] += particle[1][1]
-        particle[2]-= 0.1
-        pygame.draw.circle(screen, (128, 0, 0), [int(particle[0][0]),int(particle[0][1])], particle[2])
+        particle[2]-= 0.5
+        pygame.draw.circle(screen, (255, 255, 255, 0), [int(particle[0][0]),int(particle[0][1])], particle[2])
         if particle[2] <= 0:
             particles.remove(particle)
 
@@ -753,7 +763,7 @@ def mainmenu():
     
     # screen.fill((0, 0, 0))
     screen.blit(bg, (0, 0))
-    write("ARKAGAME", 200, 50, color="yellow")
+    write("PyBreakNoid", 200, 50, color="yellow")
     write("https://pythonprogramming.altervista.org", 200, 160)
     write("CHOOSE A GAME", 200, 300, color="green")
     write("1 - Arkanoid One", 150, 340)
