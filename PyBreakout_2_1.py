@@ -395,7 +395,7 @@ def create_bricks4():
     global column
     blist = []
     templ = []
-    for n in range(randrange(3,16)):
+    for n in range(randrange(3, 16)):
         riga = [str(choice([0, 1, 2])) for x in range(column)]
         riga2 = riga[::-1]
         riga = riga + riga2
@@ -409,7 +409,8 @@ def create_bricks4():
     h = 50
     w = 0
     for line in blist:
-        randomcolor = randrange(100, 255), randrange(100, 255), randrange(100, 255),
+        # randomcolor = randrange(100, 255), randrange(100, 255), randrange(100, 255)
+        randomcolor = choice(COLORS)
         for brick in line:
             if brick == "1":
                 # This are the rect coordinates
@@ -523,8 +524,8 @@ def restart4():
     pygame.display.set_caption("Tiny PyBreak 2")
     restart_common()
     ball.size = 8
-    bar.w = 20
-    bar.h = 7
+    bar.w = 30
+    bar.h = 10
     bar.color = ORANGE
     bricks = create_bricks4()
     bar.resize()
