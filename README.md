@@ -1,3 +1,4 @@
+<img src="https://i2.wp.com/pythonprogramming.altervista.org/wp-content/uploads/2020/08/arkapygame_20.png?resize=676%2C483&ssl=1">
 <img src="https://i1.wp.com/pythonprogramming.altervista.org/wp-content/uploads/2020/07/particles.png?w=499&ssl=1">
 <h1>arkapygame</h1>
 <a href="https://pythonprogramming.altervista.org/particles-in-arkapygame-v-10-0">Arkanoid clone made with pygame</a>
