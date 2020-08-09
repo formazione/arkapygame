@@ -88,7 +88,7 @@ class Brick(pygame.sprite.Sprite):
         self.color = color
         # choose a random image for the bricks and then resize it
         self.image = pygame.image.load(
-            random.choice(glob("img/bricks/break*.png")))
+            random.choice(glob("img/bricks3/break*.png")))
         self.resize()
         self.rect = self.image.get_rect()
         self.rect.topleft = (self.x, self.y)
