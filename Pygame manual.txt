@@ -1,10 +1,39 @@
 Pygame manual
 
+SHAPES SHAPES SHAPES SHAPES SHAPES SHAPES SHAPES SHAPES 
 
 Draw a line
 
+==========================================
+Draw a rectangle:
+==========================================
+pygame.draw.rect(screen, BLACK, rect)
+or...
+pygame.draw.rect(screen, (0, 0, 0), (bar.x, bar.y, bar.w, bar.h))
+                 surface   color        coordinates
+==========================================
+You need
+	screen
+	color
+	x, y, w, h
+========
+screen
+========
+screen is the Main Surface:
+you make it with this at the start of the code after pygame.init()
+	screen = pygame.display.set_mode((400, 400))
+====
+Color
+=====
+just a color like (0, 255, 0)
 
-        pygame.draw.rect(screen, (0, 0, 0), (bar.x, bar.y, bar.w, bar.h))
+====
+rect
+====
+Four coordinates of the left top corner and right bottom one
+					=====================
+					======= CIRCLE =====
+					=====================
         gfxdraw.filled_circle(
             screen,
             ball.x,
