@@ -41,66 +41,30 @@ BLUE = (0, 0, 255)
 GRAY = (255, 255, 255)
 COLORS = (BLACK, RED, GREEN, YELLOW, ORANGE, BLUE, GRAY)
 
-class MySprite(pygame.sprite.Sprite):
-    def __init__(self, action="jump", location=(0, 0)):
-        super(MySprite, self).__init__()
-        self.action = action
-        self.index = 0
-        # if you use more istance with the same image
-        # if MySprite.image is None
-        self.list_surfaces = self.ordered_list_of_surfaces()
-        self.image = self.list_surfaces[0]
-        self.rect = self.image.get_rect()
-        self.rect.topleft = location
 
-    def update(self):
-        self.index += .03
-        if self.index >= len(self.list_surfaces):
-            self.index = 0
-        self.image = self.list_surfaces[int(self.index)]
-
-    def ordered_list_of_surfaces(self):
-        "Ordered images i list_of_surfaces"
-        im = glob(f"imgs\\{self.action}*.png")
-        self.los = [
-            pygame.image.load(img).convert_alpha()
-            for img in glob(f"imgs\\{self.action}*.png")
-            if len(img) == len(im[0])]
-        self.los2 = [
-            pygame.image.load(img).convert_alpha()
-            for img in glob(f"imgs\\{self.action}*.png")
-            if len(img) != len(im[0])]
-        self.los.extend(self.los2)
-        return self.los
 
 
 class Brick(pygame.sprite.Sprite):
     "One brick class"
 
-    def __init__(self, image, x, y, w=50, h=20, color=GREEN):
-        super(Brick, self).__init__()
+    def __init__(self, x, y, w=50, h=20, color=GREEN):
+        super().__init__()
         self.x = x
         self.y = y
         self.w = w
         self.h = h
         self.color = color
-        # choose a random image for the bricks and then resize it
-        # self.image = pygame.image.load(
-        #     random.choice(glob("img/bricks3/break*.png")))
-        self.image = image
-        self.resize()
-        self.rect = self.image.get_rect()
-        self.rect.topleft = (self.x, self.y)
+        self.surface = pygame.Surface((w, h))
+        self.surface.fill(color)
+        # This is for collision1
+        self.rect = pygame.Rect(self.x, self.y, self.w, self.h)
 
     def update(self):
         # when you update it will go to self.x and self.y
         # bar.x is constantly equal to the mouse position in the while loop
-        screen.blit(self.image, (self.x, self.y))
+        screen.blit(self.surface, (self.x, self.y))
         # pygame.draw.rect(screen, self.color, self.rect)
 
-    def resize(self):
-        #self.image = pygame.image.load("img/brick01.png").convert_alpha()
-        self.image = pygame.transform.scale(self.image, (self.w, self.h))
 
 
 class Bar(pygame.sprite.Sprite):
@@ -365,11 +329,9 @@ def create_bricks1():
     h = 50
     w = 0
     for line in blist:
-        b = pygame.image.load(choice(glob("img/bricks3/*.png")))
         for brick in line:
             if brick == "1":
-
-                bricks.append(Brick(b, 20 + w * 60, h))
+                bricks.append(Brick(20 + w * 60, h))
             w += 1
             if w == 8:
                 w = 0
@@ -390,11 +352,10 @@ def create_bricks2():
     h = 50
     w = 0
     for line in blist:
-        b = pygame.image.load(choice(glob("img/bricks3/*.png")))
         rndclr = randrange(100, 255), randrange(100, 255), randrange(100, 255),
         for brick in line:
             if brick == "1":
-                bricks.append(Brick(b, 50 + w * 51, h, color=rndclr))
+                bricks.append(Brick(50 + w * 51, h, color=rndclr))
             w += 1
             if w == 8:
                 w = 0
@@ -418,11 +379,10 @@ def create_bricks3():
     h = 50
     w = 0
     for line in blist:
-        b = pygame.image.load(choice(glob("img/bricks3/*.png")))
         rndclr = randrange(0, 100), randrange(50, 255), randrange(250, 255)
         for brick in line:
             if brick == "1":
-                bricks.append(Brick(b, 6 + w * 26, h, w=25, h=10, color=rndclr))
+                bricks.append(Brick(6 + w * 26, h, w=25, h=10, color=rndclr))
             w += 1
             if w == column * 2:
                 w = 0
@@ -449,13 +409,12 @@ def create_bricks4():
     h = 50
     w = 0
     for line in blist:
-        b = pygame.image.load(choice(glob("img/bricks3/*.png")))
         # randomcolor = randrange(100, 255), randrange(100, 255), randrange(100, 255)
         randomcolor = choice(COLORS)
         for brick in line:
             if brick == "1":
                 # This are the rect coordinates
-                bricks.append(Brick(b, 40 + w * 21, h, w=20, h=20, color=randomcolor))
+                bricks.append(Brick(40 + w * 21, h, w=20, h=20, color=randomcolor))
             w += 1
             if w == column * 2:
                 w = 0

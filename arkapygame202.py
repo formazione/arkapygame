@@ -41,30 +41,86 @@ BLUE = (0, 0, 255)
 GRAY = (255, 255, 255)
 COLORS = (BLACK, RED, GREEN, YELLOW, ORANGE, BLUE, GRAY)
 
+class Particle():
+    def __init__(self, startx, starty, col):
+        self.x = startx
+        self.y = random.randint(0, starty)
+        self.col = col
+        self.sx = startx
+        self.sy = starty
 
+    def move(self):
+        "When reaches the top, it returns down"
+        self.sx += random.randrange(-10, 11)
+        if self.y < 0:
+            self.x = self.sx
+            self.y = self.sy
+
+        else:
+            self.y -= 1
+
+        self.x += random.randint(-2, 2)
+
+class MySprite(pygame.sprite.Sprite):
+    def __init__(self, action="jump", location=(0, 0)):
+        super(MySprite, self).__init__()
+        self.action = action
+        self.index = 0
+        # if you use more istance with the same image
+        # if MySprite.image is None
+        self.list_surfaces = self.ordered_list_of_surfaces()
+        self.image = self.list_surfaces[0]
+        self.rect = self.image.get_rect()
+        self.rect.topleft = location
+
+    def update(self):
+        self.index += .03
+        if self.index >= len(self.list_surfaces):
+            self.index = 0
+        self.image = self.list_surfaces[int(self.index)]
+
+    def ordered_list_of_surfaces(self):
+        "Ordered images i list_of_surfaces"
+        im = glob(f"imgs\\{self.action}*.png")
+        self.los = [
+            pygame.image.load(img).convert_alpha()
+            for img in glob(f"imgs\\{self.action}*.png")
+            if len(img) == len(im[0])]
+        self.los2 = [
+            pygame.image.load(img).convert_alpha()
+            for img in glob(f"imgs\\{self.action}*.png")
+            if len(img) != len(im[0])]
+        self.los.extend(self.los2)
+        return self.los
 
 
 class Brick(pygame.sprite.Sprite):
     "One brick class"
 
-    def __init__(self, x, y, w=50, h=20, color=GREEN):
-        super().__init__()
+    def __init__(self, image, x, y, w=50, h=20, color=GREEN):
+        super(Brick, self).__init__()
         self.x = x
         self.y = y
         self.w = w
         self.h = h
         self.color = color
-        self.surface = pygame.Surface((w, h))
-        self.surface.fill(color)
-        # This is for collision1
-        self.rect = pygame.Rect(self.x, self.y, self.w, self.h)
+        # choose a random image for the bricks and then resize it
+        # self.image = pygame.image.load(
+        #     random.choice(glob("img/bricks3/break*.png")))
+        self.image = image
+        self.resize()
+        self.rect = self.image.get_rect()
+        self.rect.topleft = (self.x, self.y)
 
     def update(self):
         # when you update it will go to self.x and self.y
         # bar.x is constantly equal to the mouse position in the while loop
-        screen.blit(self.surface, (self.x, self.y))
+        screen.blit(self.image, (self.x, self.y))
         # pygame.draw.rect(screen, self.color, self.rect)
 
+    def resize(self):
+        #self.image = pygame.image.load("img/brick01.png").convert_alpha()
+        self.image = pygame.transform.scale(self.image, (self.w, self.h))
 
 
 class Bar(pygame.sprite.Sprite):
@@ -96,7 +152,7 @@ class Bullet(pygame.sprite.Sprite):
     "This is the bar class"
 
     def __init__(self, x, y, w=3, h=4):
-        super().__init__()
+        super(Bullet, self).__init__()
         self.x = x
         self.y = y
         self.w = w
@@ -329,9 +385,11 @@ def create_bricks1():
     h = 50
     w = 0
     for line in blist:
+        b = pygame.image.load(choice(glob("img/bricks3/*.png")))
         for brick in line:
             if brick == "1":
-                bricks.append(Brick(20 + w * 60, h))
+
+                bricks.append(Brick(b, 20 + w * 60, h))
             w += 1
             if w == 8:
                 w = 0
@@ -352,10 +410,11 @@ def create_bricks2():
     h = 50
     w = 0
     for line in blist:
+        b = pygame.image.load(choice(glob("img/bricks3/*.png")))
         rndclr = randrange(100, 255), randrange(100, 255), randrange(100, 255),
         for brick in line:
             if brick == "1":
-                bricks.append(Brick(50 + w * 51, h, color=rndclr))
+                bricks.append(Brick(b, 50 + w * 51, h, color=rndclr))
             w += 1
             if w == 8:
                 w = 0
@@ -379,10 +438,11 @@ def create_bricks3():
     h = 50
     w = 0
     for line in blist:
+        b = pygame.image.load(choice(glob("img/bricks3/*.png")))
         rndclr = randrange(0, 100), randrange(50, 255), randrange(250, 255)
         for brick in line:
             if brick == "1":
-                bricks.append(Brick(6 + w * 26, h, w=25, h=10, color=rndclr))
+                bricks.append(Brick(b, 6 + w * 26, h, w=25, h=10, color=rndclr))
             w += 1
             if w == column * 2:
                 w = 0
@@ -409,12 +469,13 @@ def create_bricks4():
     h = 50
     w = 0
     for line in blist:
+        b = pygame.image.load(choice(glob("img/bricks3/*.png")))
         # randomcolor = randrange(100, 255), randrange(100, 255), randrange(100, 255)
         randomcolor = choice(COLORS)
         for brick in line:
             if brick == "1":
                 # This are the rect coordinates
-                bricks.append(Brick(40 + w * 21, h, w=20, h=20, color=randomcolor))
+                bricks.append(Brick(b, 40 + w * 21, h, w=20, h=20, color=randomcolor))
             w += 1
             if w == column * 2:
                 w = 0
@@ -538,8 +599,8 @@ def show_bricks():
     pygame.draw.line(screen, "red", (0, 40), (500, 40), 2)
     for brick in bricks:
         brick.update()
-    screen.blit(barrier, (0, 0))
-    screen.blit(barrier, (495, 0))
+    screen.blit(barrier, (-1, 0))
+    screen.blit(barrier, (489, 0))
 # ========================================================== #
 
 def show_fps(color="Coral"):
@@ -636,7 +697,7 @@ def mainloop():
                 if bullet.canfire:
                     particles_on = 1     
                     
-                    pygame.mixer.Sound.play(sounds["bang"])
+                    pygame.mixer.Sound.play(sounds["laser2"])
                     bullet.x = bar.x + bar.w // 2
                     bullet.y = bar.y
                     bullet.fire = 1
@@ -692,7 +753,7 @@ def mainloop():
         # if pygame.mouse.get_pos()[1] > 400:
         #     bar.y = pygame.mouse.get_pos()[1]
 
-        if posx > 10 and posx < 430 + 60 - bar.w:
+        if posx > 15 and posx + bar.w < 489:
             # il surface si muove come il mouse
             bar.x = posx
         diff = startx - posx
@@ -768,7 +829,7 @@ def delete_particles():
 
 
 randomstage = 0
-bg = pygame.image.load("img/background.png")
+bg = pygame.image.load("img/background2.png")
 def mainmenu():
     "The menu to choose among different games"
     
@@ -826,9 +887,9 @@ def mainmenu():
                 #     game = 6
                 #     restart6()
             elif event.type == pygame.KEYUP:
-                if event.key == pygame.K_1 or event.key == pygame.K_2 or event.key == pygame.K_3 or event.key == pygame.K_4 or event.key == pygame.K_5:
-                    screen.fill((0, 0, 0))
-                    mainloop()
+                #if event.key == pygame.K_1 or event.key == pygame.K_2 or event.key == pygame.K_3 or event.key == pygame.K_4 or event.key == pygame.K_5:
+                screen.fill((0, 0, 0))
+                mainloop()
                 if event.key == pygame.K_ESCAPE:
                     loop = 0
             # Put this in line with for event ...
@@ -880,7 +941,7 @@ clock = pygame.time.Clock()
 startx = 0
 
 # background = pygame.image.load("img\\background.png").convert()
-barrier = pygame.image.load("img\\barrier.png").convert()
+barrier = pygame.image.load("img\\barrier2.png").convert()
 
 mousedir = "stop"
 diff = 0

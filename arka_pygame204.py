@@ -1,0 +1,5 @@
+pygame 2.0.0.dev10 (SDL 2.0.12, python 3.8.5)
+Hello from the pygame community. https://www.pygame.org/contribute.html
+['sound\\brick.mp3', 'sound\\bulletbrick.mp3', 'sound\\hitbar2.mp3', 'sound\\hitbrick.mp3', 'sound\\laser2.mp3', 'sound\\out.mp3', 'sound\\outspeech.mp3', 'sound\\over.mp3', 'sound\\ready.mp3', 'sound\\wall.mp3']
+{'brick': <Sound object at 0x0000019DFE06A750>, 'bulletbrick': <Sound object at 0x0000019DFE06A9C0>, 'hitbar2': <Sound object at 0x0000019DFE06A870>, 'hitbrick': <Sound object at 0x0000019DFE06A8A0>, 'laser2': <Sound object at 0x0000019DFE06A8D0>, 'out': <Sound object at 0x0000019DFE06A900>, 'outspeech': <Sound object at 0x0000019DFE06A930>, 'over': <Sound object at 0x0000019DFE06A960>, 'ready': <Sound object at 0x0000019DFE06A810>, 'wall': <Sound object at 0x0000019DFE06A840>}
+>>> 

@@ -41,28 +41,66 @@ BLUE = (0, 0, 255)
 GRAY = (255, 255, 255)
 COLORS = (BLACK, RED, GREEN, YELLOW, ORANGE, BLUE, GRAY)
 
+class MySprite(pygame.sprite.Sprite):
+    def __init__(self, action="jump", location=(0, 0)):
+        super(MySprite, self).__init__()
+        self.action = action
+        self.index = 0
+        # if you use more istance with the same image
+        # if MySprite.image is None
+        self.list_surfaces = self.ordered_list_of_surfaces()
+        self.image = self.list_surfaces[0]
+        self.rect = self.image.get_rect()
+        self.rect.topleft = location
 
+    def update(self):
+        self.index += .03
+        if self.index >= len(self.list_surfaces):
+            self.index = 0
+        self.image = self.list_surfaces[int(self.index)]
+
+    def ordered_list_of_surfaces(self):
+        "Ordered images i list_of_surfaces"
+        im = glob(f"imgs\\{self.action}*.png")
+        self.los = [
+            pygame.image.load(img).convert_alpha()
+            for img in glob(f"imgs\\{self.action}*.png")
+            if len(img) == len(im[0])]
+        self.los2 = [
+            pygame.image.load(img).convert_alpha()
+            for img in glob(f"imgs\\{self.action}*.png")
+            if len(img) != len(im[0])]
+        self.los.extend(self.los2)
+        return self.los
 
 
 class Brick(pygame.sprite.Sprite):
     "One brick class"
 
-    def __init__(self, x, y, w=50, h=20, color=GREEN):
-        super().__init__()
+    def __init__(self, image, x, y, w=50, h=20, color=GREEN):
+        super(Brick, self).__init__()
         self.x = x
         self.y = y
         self.w = w
         self.h = h
         self.color = color
-        self.surface = pygame.Surface
-        # This is for collision1
-        self.rect = pygame.Rect(self.x, self.y, self.w, self.h)
+        # choose a random image for the bricks and then resize it
+        # self.image = pygame.image.load(
+        #     random.choice(glob("img/bricks3/break*.png")))
+        self.image = image
+        self.resize()
+        self.rect = self.image.get_rect()
+        self.rect.topleft = (self.x, self.y)
 
     def update(self):
         # when you update it will go to self.x and self.y
         # bar.x is constantly equal to the mouse position in the while loop
-        pygame.draw.rect(screen, self.color, self.rect)
+        screen.blit(self.image, (self.x, self.y))
+        # pygame.draw.rect(screen, self.color, self.rect)
 
+    def resize(self):
+        #self.image = pygame.image.load("img/brick01.png").convert_alpha()
+        self.image = pygame.transform.scale(self.image, (self.w, self.h))
 
 
 class Bar(pygame.sprite.Sprite):
@@ -74,13 +112,19 @@ class Bar(pygame.sprite.Sprite):
         self.y = y
         self.w = w
         self.h = h
-        self.image = pygame.image.load("img/bar.png")
-        self.rect = self.image.get_rect()
+        self.image = pygame.image.load("img/bar4.png").convert_alpha()
+        # self.surface = pygame.Surface((w, h))
+        # self.surface.blit(pygame.transform.scale(self.image, (self.w, self.h)), (0, 0))
+        # self.surface.blit(self.image, (0, 0))
+
+    def resize(self):
+        self.image = pygame.image.load("img/bar4.png").convert_alpha()
+        self.image = pygame.transform.scale(self.image, (self.w, self.h))
 
     def update(self):
 
-        self.rect = pygame.Rect(self.x, self.y, self.w, self.h)
-        screen.blit(self.image, self.rect)
+        self.rect = pygame.Rect(self.x, self.y + 3, self.w, self.h)
+        screen.blit(self.image, (self.x, self.y))
         
 
 
@@ -223,6 +267,7 @@ def to_new_stage():
 def create_stage():
     global randomstage, game
 
+    # if in random mode...
     if randomstage == 1:
         game = randrange(1, 5)
         choose_stage()
@@ -243,6 +288,7 @@ def choose_stage():
         bricks = create_bricks3()
     if game == 4:
         bricks = create_bricks4()
+    bar.resize()
     show_bricks()
 
 def collision1():
@@ -319,9 +365,11 @@ def create_bricks1():
     h = 50
     w = 0
     for line in blist:
+        b = pygame.image.load(choice(glob("img/bricks3/*.png")))
         for brick in line:
             if brick == "1":
-                bricks.append(Brick(20 + w * 60, h))
+
+                bricks.append(Brick(b, 20 + w * 60, h))
             w += 1
             if w == 8:
                 w = 0
@@ -342,10 +390,11 @@ def create_bricks2():
     h = 50
     w = 0
     for line in blist:
+        b = pygame.image.load(choice(glob("img/bricks3/*.png")))
         rndclr = randrange(100, 255), randrange(100, 255), randrange(100, 255),
         for brick in line:
             if brick == "1":
-                bricks.append(Brick(50 + w * 51, h, color=rndclr))
+                bricks.append(Brick(b, 50 + w * 51, h, color=rndclr))
             w += 1
             if w == 8:
                 w = 0
@@ -369,10 +418,11 @@ def create_bricks3():
     h = 50
     w = 0
     for line in blist:
+        b = pygame.image.load(choice(glob("img/bricks3/*.png")))
         rndclr = randrange(0, 100), randrange(50, 255), randrange(250, 255)
         for brick in line:
             if brick == "1":
-                bricks.append(Brick(6 + w * 26, h, w=25, h=10, color=rndclr))
+                bricks.append(Brick(b, 6 + w * 26, h, w=25, h=10, color=rndclr))
             w += 1
             if w == column * 2:
                 w = 0
@@ -385,7 +435,7 @@ def create_bricks4():
     global column
     blist = []
     templ = []
-    for n in range(randrange(3,16)):
+    for n in range(randrange(3, 16)):
         riga = [str(choice([0, 1, 2])) for x in range(column)]
         riga2 = riga[::-1]
         riga = riga + riga2
@@ -399,11 +449,13 @@ def create_bricks4():
     h = 50
     w = 0
     for line in blist:
-        randomcolor = randrange(100, 255), randrange(100, 255), randrange(100, 255),
+        b = pygame.image.load(choice(glob("img/bricks3/*.png")))
+        # randomcolor = randrange(100, 255), randrange(100, 255), randrange(100, 255)
+        randomcolor = choice(COLORS)
         for brick in line:
             if brick == "1":
                 # This are the rect coordinates
-                bricks.append(Brick(40 + w * 21, h, w=20, h=20, color=randomcolor))
+                bricks.append(Brick(b, 40 + w * 21, h, w=20, h=20, color=randomcolor))
             w += 1
             if w == column * 2:
                 w = 0
@@ -475,6 +527,7 @@ def restart_common():
     bar.update()
     ball.size = 10
     bar.w = 60
+    bar.resize()
 
 
 def restart1():
@@ -482,7 +535,7 @@ def restart1():
     "MONOCHROME VERSION"
     restart_common()
     bricks = create_bricks1()
-    pygame.display.set_caption("MonoArcha")
+    pygame.display.set_caption("PyBreak 1")
 
 
 def restart2():
@@ -491,30 +544,32 @@ def restart2():
     restart_common()
     bricks = create_bricks2()
     show_bricks()
-    pygame.display.set_caption("PolyArcha")
+    pygame.display.set_caption("PyBreak 1")
 
 
 def restart3():
     global bricks
     "TINY VERSION 1"
-    pygame.display.set_caption("Tiny 1")
+    pygame.display.set_caption("Tiny PyBreak")
     restart_common()
     ball.size = 6
     bar.w = 30
     bricks = create_bricks3()
+    bar.resize()
     show_bricks()
 
 
 def restart4():
     global bricks
     "TINY VERSION 2"
-    pygame.display.set_caption("Tiny 2")
+    pygame.display.set_caption("Tiny PyBreak 2")
     restart_common()
     ball.size = 8
-    bar.w = 20
-    bar.h = 7
+    bar.w = 30
+    bar.h = 10
     bar.color = ORANGE
     bricks = create_bricks4()
+    bar.resize()
     show_bricks()
 
 
@@ -622,7 +677,7 @@ def mainloop():
                 if bullet.canfire:
                     particles_on = 1     
                     
-                    pygame.mixer.Sound.play(sounds["bang"])
+                    pygame.mixer.Sound.play(sounds["laser2"])
                     bullet.x = bar.x + bar.w // 2
                     bullet.y = bar.y
                     bullet.fire = 1
@@ -766,13 +821,14 @@ def mainmenu():
     write("PyBreakNoid", 200, 50, color="yellow")
     write("https://pythonprogramming.altervista.org", 200, 160)
     write("CHOOSE A GAME", 200, 300, color="green")
+    write("Press m to come back to menu Esc to quit", 200, 320, color="green")
     write("1 - Arkanoid One", 150, 340)
     write("2 - Arkanoid in color", 150, 360)
     write("3 - Arkanoid tiny v.1", 150, 380)
     write("4 - Arkanoid tiny 2", 150, 400)
     write("5 - Random levels", 150, 420)
     # write("4 - Arkanoid tiny 2", 150, 400)
-    write("July 2020", 150, 480, color="gray")
+    write("August 2020", 150, 480, color="gray")
     loop = 1
     while loop:
         # screen.blit(background, (0, 0))

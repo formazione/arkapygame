@@ -5,7 +5,6 @@ import os
 from random import choice, randrange
 from glob import glob 
 import random
-from time import time
 '''
 To add a new type of game
 - createbricks5()
@@ -54,16 +53,13 @@ class Brick(pygame.sprite.Sprite):
         self.w = w
         self.h = h
         self.color = color
-        self.surface = pygame.Surface((w, h))
-        self.surface.fill(color)
         # This is for collision1
         self.rect = pygame.Rect(self.x, self.y, self.w, self.h)
 
     def update(self):
         # when you update it will go to self.x and self.y
         # bar.x is constantly equal to the mouse position in the while loop
-        screen.blit(self.surface, (self.x, self.y))
-        # pygame.draw.rect(screen, self.color, self.rect)
+        pygame.draw.rect(screen, self.color, self.rect)
 
 
 
@@ -76,53 +72,11 @@ class Bar(pygame.sprite.Sprite):
         self.y = y
         self.w = w
         self.h = h
-        self.image = pygame.image.load("img/bar4.png").convert_alpha()
-        # self.surface = pygame.Surface((w, h))
-        # self.surface.blit(pygame.transform.scale(self.image, (self.w, self.h)), (0, 0))
-        # self.surface.blit(self.image, (0, 0))
-
-    def resize(self):
-        self.image = pygame.image.load("img/bar4.png").convert_alpha()
-        self.image = pygame.transform.scale(self.image, (self.w, self.h))
 
     def update(self):
 
-        self.rect = pygame.Rect(self.x, self.y + 3, self.w, self.h)
-        screen.blit(self.image, (self.x, self.y))
-        
-
-
-class Bullet(pygame.sprite.Sprite):
-    "This is the bar class"
-
-    def __init__(self, x, y, w=3, h=4):
-        super().__init__()
-        self.x = x
-        self.y = y
-        self.w = w
-        self.h = h
-        # this stops the bullet when on top
-        self.fire = 0
-        # you can shoot one bullet at the time
-        self.canfire = 1
         self.rect = pygame.Rect(self.x, self.y, self.w, self.h)
-
-    def __del__(self):
-        print("deleted")
-
-    def update(self):
-        self.rect = pygame.Rect(self.x, self.y, self.w, self.h)
-        pygame.draw.rect(screen, BLACK, (self.x, self.y + self.h, self.w, self.h))
-        pygame.draw.rect(screen, GRAY, self.rect)
-
-    def delete(self):
-        pygame.draw.rect(screen, BLACK, (self.x, self.y + 1, self.w, self.h))
-
-
-def save_image(screen: pygame.Surface, name: str="screenshot.png"):
-    "Saves an image of the screen;\
-    arg 1 screen surface, arg 2 name to save"
-    pygame.image.save(screen, name)
+        pygame.draw.rect(screen, RED, self.rect)
 
 
 velocity = 3
@@ -189,7 +143,7 @@ def hit_brick_update(brick, n):
     screen.blit(show_fps(color="Black"), (12, 10))
     score += 20
     screen.blit(show_fps(), (12, 10))
-    # pygame.mixer.Sound.play(sounds["hitbrick"])
+    pygame.mixer.Sound.play(sounds["hitbrick"])
     bricks.pop(n)
 
 
@@ -215,46 +169,6 @@ def ball_direction(brick):
             else:
                 ball_x = "left"
 
-
-def to_new_stage():
-    global stage, score, velocity
-
-    set_score()
-    stage += 1
-    score += 50
-    screen.fill((0, 0, 0))
-    ball.y = 300
-    ball.x = 100
-    velocity = 3
-    pygame.mixer.Sound.play(sounds["ready"])
-
-def create_stage():
-    global randomstage, game
-
-    # if in random mode...
-    if randomstage == 1:
-        game = randrange(1, 5)
-        choose_stage()
-    else:
-        choose_stage()
-
-def choose_stage():
-    global bricks
-
-    if game == 1:
-        if bar.w > 20:
-            bar.w -= 5
-        bricks = create_bricks1()
-    if game == 2:
-        bar.w = randrange(20, 70, 10)
-        bricks = create_bricks2()
-    if game == 3:
-        bricks = create_bricks3()
-    if game == 4:
-        bricks = create_bricks4()
-    bar.resize()
-    show_bricks()
-
 def collision1():
     global ball, bar, ball_y, ball_x, mousedir, bricks
     global lives, stage, score, game, randomstage, velocity
@@ -263,7 +177,7 @@ def collision1():
     if ball.rect.colliderect(bar):
         # print("sulla barra: ", ball.x - bar.x)
         # print("Diff=", diff)
-        # particles_on = 1
+        particles_on = 1
         pygame.mixer.Sound.play(sounds["hitbar2"])
         # when the ball hit the bar, it goes up
         ball_y = "up"
@@ -271,6 +185,37 @@ def collision1():
             ball_x = "left"
         if (mousedir == "right" and ball_x == "left"):
             ball_x = "right"
+
+    for n, brick in enumerate(bricks):
+        if ball.rect.colliderect(brick):
+            # screen.fill((0, 0, 0))
+            hit_brick_update(brick, n)
+            ball_direction(brick)
+
+            # STAGE FINITO
+            if bricks == []:
+                set_score()
+                stage += 1
+                score += 50
+                screen.fill((0, 0, 0))
+                ball.y = 300
+                ball.x = 100
+                velocity = 3
+                pygame.mixer.Sound.play(sounds["ready"])
+                if randomstage == 1:
+                    game = randrange(1,5)
+                if game == 1:
+                    if bar.w > 20:
+                        bar.w -= 5
+                    bricks = create_bricks1()
+                if game == 2:
+                    bar.w = randrange(20, 70, 10)
+                    bricks = create_bricks2()
+                if game == 3:
+                    bricks = create_bricks3()
+                if game == 4:
+                    bricks = create_bricks4()
+                show_bricks()
 
     if ball.y > 510:
         ball.x, ball.y = 500, 300
@@ -288,26 +233,6 @@ def collision1():
             back_to_menu()
 
 
-    for n, brick in enumerate(bricks):
-
-        # ================================== BULLET hits the brick
-        if bullet.rect.colliderect(brick):
-            hit_brick_update(brick, n)
-            pygame.mixer.Sound.play(sounds["brick"])
-            bullet.delete()
-            bullet.y = 0
-            if bricks == []:
-                to_new_stage()
-                create_stage()
-    # ==============================  Ball Collides brick
-        if ball.rect.colliderect(brick):
-            # screen.fill((0, 0, 0))
-            pygame.mixer.Sound.play(sounds["brick"])
-            hit_brick_update(brick, n)
-            ball_direction(brick)
-            if bricks == []:
-                to_new_stage()
-                create_stage()
 
 
 def create_bricks1():
@@ -395,7 +320,7 @@ def create_bricks4():
     global column
     blist = []
     templ = []
-    for n in range(randrange(3, 16)):
+    for n in range(randrange(3,16)):
         riga = [str(choice([0, 1, 2])) for x in range(column)]
         riga2 = riga[::-1]
         riga = riga + riga2
@@ -409,8 +334,7 @@ def create_bricks4():
     h = 50
     w = 0
     for line in blist:
-        # randomcolor = randrange(100, 255), randrange(100, 255), randrange(100, 255)
-        randomcolor = choice(COLORS)
+        randomcolor = randrange(100, 255), randrange(100, 255), randrange(100, 255),
         for brick in line:
             if brick == "1":
                 # This are the rect coordinates
@@ -486,7 +410,6 @@ def restart_common():
     bar.update()
     ball.size = 10
     bar.w = 60
-    bar.resize()
 
 
 def restart1():
@@ -494,7 +417,7 @@ def restart1():
     "MONOCHROME VERSION"
     restart_common()
     bricks = create_bricks1()
-    pygame.display.set_caption("PyBreak 1")
+    pygame.display.set_caption("MonoArcha")
 
 
 def restart2():
@@ -503,32 +426,30 @@ def restart2():
     restart_common()
     bricks = create_bricks2()
     show_bricks()
-    pygame.display.set_caption("PyBreak 1")
+    pygame.display.set_caption("PolyArcha")
 
 
 def restart3():
     global bricks
     "TINY VERSION 1"
-    pygame.display.set_caption("Tiny PyBreak")
+    pygame.display.set_caption("Tiny 1")
     restart_common()
     ball.size = 6
     bar.w = 30
     bricks = create_bricks3()
-    bar.resize()
     show_bricks()
 
 
 def restart4():
     global bricks
     "TINY VERSION 2"
-    pygame.display.set_caption("Tiny PyBreak 2")
+    pygame.display.set_caption("Tiny 2")
     restart_common()
     ball.size = 8
-    bar.w = 30
-    bar.h = 10
+    bar.w = 20
+    bar.h = 7
     bar.color = ORANGE
     bricks = create_bricks4()
-    bar.resize()
     show_bricks()
 
 
@@ -564,16 +485,17 @@ def write(text, x, y, color="Coral",):
 def back_to_menu():
     set_score()
     screen.fill((0, 0, 0))
-    pygame.display.update()
-
     mainmenu()
 
 # =================================================================
-
+def delete_particles():
+    global particles
+    for particle in particles:
+        pygame.draw.circle(screen, (0, 0, 0), [int(particle[0][0]),int(particle[0][1])], particle[2])
+    particles = []
 
 
 p_count = 0
-
 def mainloop():
     global startx, mousedir, diff, game, velocity, bang
     global particles, particles_on, p_count
@@ -595,18 +517,6 @@ def mainloop():
         if particles_on:
             bar_particles()
 
-
-        # BULLET =====>  F I R E
-        if bullet.fire == 1:
-            if bullet.y > 0:
-                bullet.update()
-  
-                bullet.y -= 1
-            else:
-                bullet.fire = 0
-                bullet.y = bar.y
-                bullet.canfire = 1
-
         # ======================================
         if score % 1000 == 0:
             velocity = 3
@@ -614,7 +524,7 @@ def mainloop():
             ball.color = GREEN
         if velocity > 0:
             if pygame.time.get_ticks() - times > 20000:
-                velocity -= .5
+                velocity -= 1
                 if velocity == 2:
                     ball.color = YELLOW
                 if velocity == 1:
@@ -629,22 +539,6 @@ def mainloop():
             if event.type == pygame.QUIT:
                 set_score()
                 loop2 = 0
-
-                #       M O U S E  -  F I R E        #
-
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                if bullet.canfire:
-                    particles_on = 1     
-                    
-                    pygame.mixer.Sound.play(sounds["bang"])
-                    bullet.x = bar.x + bar.w // 2
-                    bullet.y = bar.y
-                    bullet.fire = 1
-                    bullet.canfire = 0
-            
-
-            if event.type == pygame.QUIT:
-                loop = 0
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     set_score()
@@ -652,8 +546,12 @@ def mainloop():
                     loop2 = 0
                 if event.key == pygame.K_m:
                     back_to_menu()
-                if event.key == pygame.K_s:
-                    save_image(screen)
+            if event.type == pygame.KEYUP:
+                if event.type == pygame.K_ESCAPE:
+                    loop2 = 0
+            if event.type == pygame.QUIT:
+                loop = 0
+            if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_1:
                     game = 1
                     restart1()
@@ -685,12 +583,11 @@ def mainloop():
             elif event.type == pygame.KEYUP:
                 if event.key == pygame.K_1 or event.key == pygame.K_2 or event.key == pygame.K_3 or event.key == pygame.K_4 or event.key == pygame.K_5:
                     screen.fill((0, 0, 0))
-                    pygame.display.update()
                     mainloop()
         # This is the position of the mouse on the x axe
 
-        # if pygame.mouse.get_pos()[1] > 400:
-        #     bar.y = pygame.mouse.get_pos()[1]
+        if pygame.mouse.get_pos()[1] > 400:
+            bar.y = pygame.mouse.get_pos()[1]
 
         if posx > 10 and posx < 430 + 60 - bar.w:
             # il surface si muove come il mouse
@@ -702,7 +599,6 @@ def mainloop():
 
         bar.update()
         collision1()
-        display.blit(pygame.transform.scale(screen, (850, 850)), (0,0))
         pygame.display.update()
         clock.tick(360)
     #pygame.quit()
@@ -721,7 +617,7 @@ def check_mouse_dir(diff):
 def bar_particles():
     global p_count, particles, particles_on
     p_count += .1
-    if p_count < 6:
+    if p_count < 36:
         show_particles()
     else:
         p_count = 0
@@ -737,11 +633,8 @@ def show_particles():
     if count == 6:
         count = 0
         particles.append([
-            # first
-            [random.randint(bar.x + bar.w // 2 -2, bar.x + bar.w - bar.w // 2 + 2), bar.y],
-            # second
+            [random.randint(bar.x, bar.x + bar.w), bar.y],
             [random.randint(0, 10) / 10 - 1, -2],
-            # thirs
             random.randint(4, 7)
             ])
         decrease_particles()
@@ -750,43 +643,36 @@ def decrease_particles():
     global particles
 
     for particle in particles:
-        # circles in random origin of random ra
         pygame.draw.circle(screen, (0, 0, 0), [int(particle[0][0]),int(particle[0][1])], particle[2])
         particle[0][0] +- particle[1][0]
         particle[0][1] += particle[1][1]
-        particle[2]-= 0.5
-        pygame.draw.circle(screen, (255, 255, 255, 0), [int(particle[0][0]),int(particle[0][1])], particle[2])
+        particle[2]-= 0.1
+        pygame.draw.circle(screen, (128, 0, 0), [int(particle[0][0]),int(particle[0][1])], particle[2])
         if particle[2] <= 0:
             particles.remove(particle)
 
 
-def delete_particles():
-    global particles
-    for particle in particles:
-        pygame.draw.circle(screen, (0, 0, 0), [int(particle[0][0]),int(particle[0][1])], particle[2])
-    particles = []
-
 
 randomstage = 0
-bg = pygame.image.load("img/background.png")
 def mainmenu():
     "The menu to choose among different games"
     
     global game, randomstage
     
     
-    # screen.fill((0, 0, 0))
-    screen.blit(bg, (0, 0))
-    write("PyBreakNoid", 200, 50, color="yellow")
-    write("https://pythonprogramming.altervista.org", 200, 160)
-    write("CHOOSE A GAME", 200, 300, color="green")
-    write("1 - Arkanoid One", 150, 340)
-    write("2 - Arkanoid in color", 150, 360)
-    write("3 - Arkanoid tiny v.1", 150, 380)
-    write("4 - Arkanoid tiny 2", 150, 400)
-    write("5 - Random levels", 150, 420)
+    screen.fill((0, 0, 0))
+    write("ARKAGAME", 200, 50, color="yellow")
+    write("A Game by Giovanni Gatto", 200, 120, color="red")
+    write("and pythonprogramming.altervista.org", 200, 140)
+    write("Press m to return to menu and ESC to quit", 200, 200, color="cyan")
+    write("CHOOSE YOUR GAME", 200, 260, color="green")
+    write("1 - Arkanoid Monochrome", 150, 320)
+    write("2 - Arkanoid Polichrome", 150, 340)
+    write("3 - Arkanoid tiny", 150, 360)
+    write("4 - Arkanoid tiny 2", 150, 380)
+    write("5 - RANDONOID", 150, 400)
     # write("4 - Arkanoid tiny 2", 150, 400)
-    write("July 2020", 150, 480, color="gray")
+    write("August 2020", 150, 460, color="gray")
     loop = 1
     while loop:
         # screen.blit(background, (0, 0))
@@ -832,7 +718,6 @@ def mainmenu():
                 if event.key == pygame.K_ESCAPE:
                     loop = 0
             # Put this in line with for event ...
-            display.blit(pygame.transform.scale(screen, (850, 850)), (0, 0))
             pygame.display.update()
     pygame.quit()
 
@@ -857,7 +742,7 @@ def init():
     pygame.mixer.init(22050, -16, 2, 512)
     pygame.mixer.set_num_channels(32)
     # Load all sounds
-    lsounds = glob("sound\\*.mp3")
+    lsounds = glob("sound\\*.wav")
     print(lsounds)
     # Dictionary with all sounds, keys are the name of wav
     sounds = {}
@@ -869,12 +754,9 @@ def init():
 sounds = init()
 print(sounds)
 particles_on = 0
-# The main surface where the display surface is blitted
-display = pygame.display.set_mode((850, 850))
-# A second surface where the sprite are blitted
-screen = pygame.Surface((500, 500))
 
-pygame.display.set_caption("ArkaPyGame 1.8.7 by pythonprogramming.altervista.org")
+screen = pygame.display.set_mode((500, 500))
+pygame.display.set_caption("ArkaGame 5.0 by pythonprogramming.altervista.org")
 
 clock = pygame.time.Clock()
 startx = 0
@@ -891,7 +773,6 @@ scoremax = 0
 # The bar and the ball istance of Bar and Ball
 bar = Bar(10, 480)
 ball = Ball(250, 350)
-bullet = Bullet(bar.x, bar.y - 10)
 bricks = create_bricks1()
 
 mainmenu()
