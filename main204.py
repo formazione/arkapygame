@@ -3,9 +3,8 @@ import pygame
 from pygame import gfxdraw
 import os
 from random import choice, randrange
-from glob import glob 
+from glob import glob
 import random
-from time import time
 '''
 To add a new type of game
 - createbricks5()
@@ -199,7 +198,7 @@ class Ball(pygame.sprite.Sprite):
     global velocity
 
     def __init__(self, x, y, size=10):
-        super().__init__()
+        super(Ball, self).__init__()
         self.x = x
         self.y = y
         self.color = RED
@@ -220,7 +219,7 @@ class Ball(pygame.sprite.Sprite):
                 ball.x -= velx
                 # se arriva a 10 rimbalza
                 if ball.x < 10:
-                    pygame.mixer.Sound.play(sounds["wall"])
+                    play("wall")
                     ball_x = "right"
             # va in basso
             if ball_y == 'down':
@@ -231,14 +230,14 @@ class Ball(pygame.sprite.Sprite):
                 ball.y -= vel_y
                 # se arriva in cima rimbalza in basso
                 if ball.y < 50:
-                    pygame.mixer.Sound.play(sounds["wall"])
+                    play("wall")
                     ball_y = 'down'
             # se va a destra aumenta x
             if ball_x == "right":
                 ball.x += velx
                 # a 480 rimbalza verso sinistra
                 if ball.x > 490:
-                    pygame.mixer.Sound.play(sounds["wall"])
+                    play("wall")
                     ball_x = "left"
 
         gfxdraw.filled_circle(screen, ball.x, ball.y, self.size // 2, self.color)
@@ -256,7 +255,7 @@ def hit_brick_update(brick, n):
     screen.blit(show_fps(color="Black"), (12, 10))
     score += 20
     screen.blit(show_fps(), (12, 10))
-    # pygame.mixer.Sound.play(sounds["hitbrick"])
+    # play("hitbrick")
     bricks.pop(n)
 
 
@@ -293,8 +292,7 @@ def to_new_stage():
     ball.y = 300
     ball.x = 100
     velocity = 3
-    pygame.mixer.Sound.play(sounds["ready"])
-
+    play("ready")
 def create_stage():
     global randomstage, game
 
@@ -331,7 +329,7 @@ def collision1():
         # print("sulla barra: ", ball.x - bar.x)
         # print("Diff=", diff)
         # particles_on = 1
-        pygame.mixer.Sound.play(sounds["hitbar2"])
+        play("hitbar2")
         # when the ball hit the bar, it goes up
         ball_y = "up"
         if (mousedir == "left" and ball_x == "right"):
@@ -342,11 +340,11 @@ def collision1():
     if ball.y > 510:
         ball.x, ball.y = 500, 300
         lives -= 1
-        pygame.mixer.Sound.play(sounds["out"])
+        play("out")
         velocity = 4
         ball.color = GREEN
         if lives < 0:
-            pygame.mixer.Sound.play(sounds["over"])
+            play("over")
             set_score()
             score = 0
             stage = 1
@@ -360,7 +358,7 @@ def collision1():
         # ================================== BULLET hits the brick
         if bullet.rect.colliderect(brick):
             hit_brick_update(brick, n)
-            pygame.mixer.Sound.play(sounds["brick"])
+            play("boom")
             bullet.delete()
             bullet.y = 0
             if bricks == []:
@@ -369,7 +367,7 @@ def collision1():
     # ==============================  Ball Collides brick
         if ball.rect.colliderect(brick):
             # screen.fill((0, 0, 0))
-            pygame.mixer.Sound.play(sounds["brick"])
+            play("brick")
             hit_brick_update(brick, n)
             ball_direction(brick)
             if bricks == []:
@@ -657,7 +655,7 @@ def mainloop():
     global particles, particles_on, p_count
 
     screen.fill((0, 0, 0))
-    pygame.mixer.Sound.play(sounds["ready"])
+    play("ready")
     show_bricks()
     # screen.fill((0, 0, 0))
     pygame.mouse.set_visible(False)
@@ -715,7 +713,8 @@ def mainloop():
                 if bullet.canfire:
                     particles_on = 1     
                     
-                    pygame.mixer.Sound.play(sounds["laser2"])
+                    # play("laser2"])                    
+                    play("shoot")
                     bullet.x = bar.x + bar.w // 2
                     bullet.y = bar.y
                     bullet.fire = 1
@@ -918,6 +917,20 @@ vel_y = 1
 ######################
 #     sound          #
 ######################
+
+def play(soundname):
+    "arg without .wav"
+    try:
+        b = pygame.mixer.Sound(sounds[soundname])
+    except KeyError:
+        print("Cannot find name of the wav file")
+    if soundname in "boom shoot":
+        b.set_volume(0.1)
+    b.play()
+    return b
+
+
+
 def init():
     "Initializing pygame and mixer"
     pygame.mixer.pre_init(44100, -16, 1, 512)
@@ -926,8 +939,9 @@ def init():
     pygame.mixer.init(22050, -16, 2, 512)
     pygame.mixer.set_num_channels(32)
     # Load all sounds
-    lsounds = glob("sound\\*.mp3")
-    print(lsounds)
+    # I use wav because of pyinstaller problems with mp3
+    lsounds = glob("sound\\*.wav")
+
     # Dictionary with all sounds, keys are the name of wav
     sounds = {}
     for sound in lsounds:

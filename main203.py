@@ -3,9 +3,8 @@ import pygame
 from pygame import gfxdraw
 import os
 from random import choice, randrange
-from glob import glob 
+from glob import glob
 import random
-from time import time
 '''
 To add a new type of game
 - createbricks5()
@@ -34,12 +33,33 @@ write("4 - Arkanoid tiny 2", 150, 400)
 
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
+RED2 = (128, 64, 0)
 GREEN = (0, 255, 0)
 YELLOW = (255, 255, 0)
 ORANGE = (128, 255, 0)
 BLUE = (0, 0, 255)
-GRAY = (255, 255, 255)
-COLORS = (BLACK, RED, GREEN, YELLOW, ORANGE, BLUE, GRAY)
+GRAY = (128, 128, 128)
+COLORS = (RED, RED, GREEN, YELLOW, ORANGE, BLUE, GRAY)
+
+class Particle():
+    def __init__(self, startx, starty, col):
+        self.x = startx
+        self.y = random.randint(0, starty)
+        self.col = col
+        self.sx = startx
+        self.sy = starty
+
+    def move(self):
+        "When reaches the top, it returns down"
+        self.sx += random.randrange(-10, 11)
+        if self.y < 0:
+            self.x = self.sx
+            self.y = self.sy
+
+        else:
+            self.y -= 1
+
+        self.x += random.randint(-2, 2)
 
 class MySprite(pygame.sprite.Sprite):
     def __init__(self, action="jump", location=(0, 0)):
@@ -77,7 +97,7 @@ class MySprite(pygame.sprite.Sprite):
 class Brick(pygame.sprite.Sprite):
     "One brick class"
 
-    def __init__(self, image, x, y, w=50, h=20, color=GREEN):
+    def __init__(self, image=None, x=0, y=0, w=50, h=20, color=GREEN):
         super(Brick, self).__init__()
         self.x = x
         self.y = y
@@ -87,7 +107,11 @@ class Brick(pygame.sprite.Sprite):
         # choose a random image for the bricks and then resize it
         # self.image = pygame.image.load(
         #     random.choice(glob("img/bricks3/break*.png")))
-        self.image = image
+        if image != None:
+            self.image = image
+        else:
+            self.image = pygame.Surface((w, y))
+            self.image.fill(color) 
         self.resize()
         self.rect = self.image.get_rect()
         self.rect.topleft = (self.x, self.y)
@@ -132,24 +156,30 @@ class Bullet(pygame.sprite.Sprite):
     "This is the bar class"
 
     def __init__(self, x, y, w=3, h=4):
-        super().__init__()
+        super(Bullet, self).__init__()
         self.x = x
         self.y = y
         self.w = w
         self.h = h
         # this stops the bullet when on top
         self.fire = 0
+        self.image = pygame.Surface((3,2))
+        self.bgd = pygame.Surface((3,4))
+        self.image.fill((128,128,128))
+        self.bgd.fill((0,0,0))
+
         # you can shoot one bullet at the time
         self.canfire = 1
-        self.rect = pygame.Rect(self.x, self.y, self.w, self.h)
+        self.rect = self.image.get_rect()
 
     def __del__(self):
         print("deleted")
 
     def update(self):
         self.rect = pygame.Rect(self.x, self.y, self.w, self.h)
-        pygame.draw.rect(screen, BLACK, (self.x, self.y + self.h, self.w, self.h))
-        pygame.draw.rect(screen, GRAY, self.rect)
+        screen.blit(self.bgd, (self.x, self.y))
+        screen.blit(self.image, (self.x, self.y))
+        # pygame.draw.rect(screen, GRAY, self.rect)
 
     def delete(self):
         pygame.draw.rect(screen, BLACK, (self.x, self.y + 1, self.w, self.h))
@@ -168,7 +198,7 @@ class Ball(pygame.sprite.Sprite):
     global velocity
 
     def __init__(self, x, y, size=10):
-        super().__init__()
+        super(Ball, self).__init__()
         self.x = x
         self.y = y
         self.color = RED
@@ -365,7 +395,7 @@ def create_bricks1():
     h = 50
     w = 0
     for line in blist:
-        b = pygame.image.load(choice(glob("img/bricks3/*.png")))
+        b = pygame.image.load(choice(glob("img/bricks/*.png")))
         for brick in line:
             if brick == "1":
 
@@ -390,7 +420,7 @@ def create_bricks2():
     h = 50
     w = 0
     for line in blist:
-        b = pygame.image.load(choice(glob("img/bricks3/*.png")))
+        b = pygame.image.load(choice(glob("img/bricks2/*.png")))
         rndclr = randrange(100, 255), randrange(100, 255), randrange(100, 255),
         for brick in line:
             if brick == "1":
@@ -402,7 +432,7 @@ def create_bricks2():
     return bricks
 
 
-column = 10
+column = 9
 def create_bricks3():
     "The bricks scheme"
     global column
@@ -419,10 +449,10 @@ def create_bricks3():
     w = 0
     for line in blist:
         b = pygame.image.load(choice(glob("img/bricks3/*.png")))
-        rndclr = randrange(0, 100), randrange(50, 255), randrange(250, 255)
+        # rndclr = randrange(0, 100), randrange(50, 255), randrange(250, 255)
         for brick in line:
             if brick == "1":
-                bricks.append(Brick(b, 6 + w * 26, h, w=25, h=10, color=rndclr))
+                bricks.append(Brick(b, 16 + w * 26, h, w=25, h=10))
             w += 1
             if w == column * 2:
                 w = 0
@@ -449,13 +479,13 @@ def create_bricks4():
     h = 50
     w = 0
     for line in blist:
-        b = pygame.image.load(choice(glob("img/bricks3/*.png")))
+        b = pygame.image.load(choice(glob("img/bricks4/*.png")))
         # randomcolor = randrange(100, 255), randrange(100, 255), randrange(100, 255)
         randomcolor = choice(COLORS)
         for brick in line:
             if brick == "1":
                 # This are the rect coordinates
-                bricks.append(Brick(b, 40 + w * 21, h, w=20, h=20, color=randomcolor))
+                bricks.append(Brick(b, 60 + w * 21, h, w=20, h=20, color=randomcolor))
             w += 1
             if w == column * 2:
                 w = 0
@@ -536,6 +566,7 @@ def restart1():
     restart_common()
     bricks = create_bricks1()
     pygame.display.set_caption("PyBreak 1")
+    mainloop()
 
 
 def restart2():
@@ -545,6 +576,7 @@ def restart2():
     bricks = create_bricks2()
     show_bricks()
     pygame.display.set_caption("PyBreak 1")
+    mainloop()
 
 
 def restart3():
@@ -557,6 +589,7 @@ def restart3():
     bricks = create_bricks3()
     bar.resize()
     show_bricks()
+    mainloop()
 
 
 def restart4():
@@ -571,7 +604,10 @@ def restart4():
     bricks = create_bricks4()
     bar.resize()
     show_bricks()
+    mainloop()
 
+
+    
 
 # ============================= SHOW BRICKS ================ #
 def show_bricks():
@@ -579,8 +615,8 @@ def show_bricks():
     pygame.draw.line(screen, "red", (0, 40), (500, 40), 2)
     for brick in bricks:
         brick.update()
-    screen.blit(barrier, (0, 0))
-    screen.blit(barrier, (495, 0))
+    screen.blit(barrier, (-1, 0))
+    screen.blit(barrier, (489, 0))
 # ========================================================== #
 
 def show_fps(color="Coral"):
@@ -619,6 +655,7 @@ def mainloop():
     global startx, mousedir, diff, game, velocity, bang
     global particles, particles_on, p_count
 
+    screen.fill((0, 0, 0))
     pygame.mixer.Sound.play(sounds["ready"])
     show_bricks()
     # screen.fill((0, 0, 0))
@@ -642,7 +679,7 @@ def mainloop():
             if bullet.y > 0:
                 bullet.update()
   
-                bullet.y -= 1
+                bullet.y -= 2
             else:
                 bullet.fire = 0
                 bullet.y = bar.y
@@ -683,9 +720,6 @@ def mainloop():
                     bullet.fire = 1
                     bullet.canfire = 0
             
-
-            if event.type == pygame.QUIT:
-                loop = 0
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     set_score()
@@ -719,21 +753,14 @@ def mainloop():
                         restart3()
                     if game2 == 4:
                         restart4()
-                # Next game
-                # elif event.key == pygame.K_6:
-                #     game = 6
-                #     restart6()
-            elif event.type == pygame.KEYUP:
-                if event.key == pygame.K_1 or event.key == pygame.K_2 or event.key == pygame.K_3 or event.key == pygame.K_4 or event.key == pygame.K_5:
-                    screen.fill((0, 0, 0))
-                    pygame.display.update()
-                    mainloop()
-        # This is the position of the mouse on the x axe
 
-        # if pygame.mouse.get_pos()[1] > 400:
-        #     bar.y = pygame.mouse.get_pos()[1]
+            # elif event.type == pygame.KEYUP:
+            #     if event.key == pygame.K_1 or event.key == pygame.K_2 or event.key == pygame.K_3 or event.key == pygame.K_4 or event.key == pygame.K_5:
+            #         screen.fill((0, 0, 0))
+            #         pygame.display.update()
 
-        if posx > 10 and posx < 430 + 60 - bar.w:
+
+        if posx > 15 and posx + bar.w < 489:
             # il surface si muove come il mouse
             bar.x = posx
         diff = startx - posx
@@ -746,7 +773,7 @@ def mainloop():
         display.blit(pygame.transform.scale(screen, (850, 850)), (0,0))
         pygame.display.update()
         clock.tick(360)
-    #pygame.quit()
+    
 
 
 def check_mouse_dir(diff):
@@ -809,7 +836,7 @@ def delete_particles():
 
 
 randomstage = 0
-bg = pygame.image.load("img/background.png")
+bg = pygame.image.load("img/background2.png")
 def mainmenu():
     "The menu to choose among different games"
     
@@ -838,6 +865,8 @@ def mainmenu():
             if event.type == pygame.QUIT:
                 loop = 0
             if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    loop = 0
                 if event.key == pygame.K_1:
                     game = 1
                     restart1()
@@ -866,12 +895,10 @@ def mainmenu():
                 # elif event.key == pygame.K_6:
                 #     game = 6
                 #     restart6()
-            elif event.type == pygame.KEYUP:
-                if event.key == pygame.K_1 or event.key == pygame.K_2 or event.key == pygame.K_3 or event.key == pygame.K_4 or event.key == pygame.K_5:
-                    screen.fill((0, 0, 0))
-                    mainloop()
-                if event.key == pygame.K_ESCAPE:
-                    loop = 0
+            # elif event.type == pygame.KEYUP:
+            #     #if event.key == pygame.K_1 or event.key == pygame.K_2 or event.key == pygame.K_3 or event.key == pygame.K_4 or event.key == pygame.K_5:
+            #     screen.fill((0, 0, 0))
+            #     mainloop()
             # Put this in line with for event ...
             display.blit(pygame.transform.scale(screen, (850, 850)), (0, 0))
             pygame.display.update()
@@ -921,7 +948,7 @@ clock = pygame.time.Clock()
 startx = 0
 
 # background = pygame.image.load("img\\background.png").convert()
-barrier = pygame.image.load("img\\barrier.png").convert()
+barrier = pygame.image.load("img\\barrier2.png").convert()
 
 mousedir = "stop"
 diff = 0

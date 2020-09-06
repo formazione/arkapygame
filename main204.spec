@@ -3,7 +3,7 @@
 block_cipher = None
 
 
-a = Analysis(['arkapygame20.py'],
+a = Analysis(['main204.py'],
              pathex=['H:\\arkapygame\\arkapygame'],
              binaries=[],
              datas=[],
@@ -23,7 +23,7 @@ exe = EXE(pyz,
           a.zipfiles,
           a.datas,
           [],
-          name='arkapygame20',
+          name='main204',
           debug=False,
           bootloader_ignore_signals=False,
           strip=False,
